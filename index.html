@@ -223,6 +223,20 @@
 
     <script src="script.js"></script>
     <script src="notif.js"></script>
+    <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker enregistré avec succès !');
+        })
+        .catch(err => {
+          console.error('Échec de l\'enregistrement du Service Worker :', err);
+        });
+    });
+  }
+</script>
+
 </body>
 
 </html>
