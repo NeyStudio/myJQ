@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "My Journaly Quest",
+    "slug": "mjqney",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "logo.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "dem.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.Ney_Studio.myJQ"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "0ec74909-768b-4264-8b24-b9ef9d63ef8d"
+      }
+    }
+  }
+}
