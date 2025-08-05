@@ -1,248 +1,191 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
     <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="manifest" href="manifest.json">
-<title>My JournalyQuest</title>
-<style>
-    body { font-family: sans-serif; text-align: center; margin-top: 50px; }
-    .form-container { max-width: 400px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
-    input { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; }
-    button { width: 100%; padding: 10px; background-color: #007BFF; color: white; border: none; border-radius: 5px; cursor: pointer; }
-</style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Application de Gamification</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="apple-touch-icon" href="icon-192x192.png">
-  <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#3498db">
-  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body class="light-theme">
 
-    </head>
-
-<body>
-    <div id="splash-screen" class="splash-screen">
-        <img src="logo.png" alt="JournalyQuest Logo" class="splash-logo">
-        <div class="splash-title">JournalyQuest</div>
+    <div class="splash-screen" id="splash-screen">
+        <img src="https://i.imgur.com/gK9Q7xL.png" alt="Logo de l'application" class="splash-logo">
+        <h1 class="splash-title">QuestFlow</h1>
         <div class="splash-spinner"></div>
     </div>
 
-    <div id="app-container" class="app-container">
-        <header>
-            <div class="profile-area">
-                <div class="profile-picture-container" id="profile-picture-container">
-                    <img src="logo.png" alt="Photo de profil" id="profile-picture">
-                    <div class="level-badge" id="level-badge"><span>1</span></div>
+    <div class="app-container" id="app-container">
+
+        <div id="auth-section" class="auth-section">
+            <h1 class="splash-title">QuestFlow</h1>
+            <img src="https://i.imgur.com/gK9Q7xL.png" alt="Logo de l'application" class="splash-logo">
+
+            <form id="login-form" class="auth-form">
+                <h2>Connexion</h2>
+                <input type="email" id="login-email" placeholder="Email" required>
+                <input type="password" id="login-password" placeholder="Mot de passe" required>
+                <button type="submit" class="main-button">Se connecter</button>
+                <p>Pas encore de compte ? <a href="#" id="show-signup">S'inscrire</a></p>
+            </form>
+
+            <form id="signup-form" class="auth-form hidden">
+                <h2>Inscription</h2>
+                <input type="text" id="signup-username" placeholder="Nom d'utilisateur" required>
+                <input type="email" id="signup-email" placeholder="Email" required>
+                <input type="password" id="signup-password" placeholder="Mot de passe" required>
+                <button type="submit" class="main-button">Créer un compte</button>
+                <p>Déjà un compte ? <a href="#" id="show-login">Se connecter</a></p>
+            </form>
+        </div>
+
+        <div id="main-app" class="main-app-content hidden">
+
+            <header>
+                <div class="profile-area">
+                    <div class="profile-picture-container" id="profile-picture-container">
+                        <img id="profile-pic" src="https://via.placeholder.com/60" alt="Photo de profil">
+                        <span class="level-badge" id="level-badge">1</span>
+                    </div>
+                    <div class="profile-info">
+                        <h2 id="user-name">Nom de l'utilisateur</h2>
+                        <p id="level-info">Niveau <span id="current-level">1</span></p>
+                    </div>
                 </div>
-                <h2 id="user-name-display">Aventurier Anonyme</h2>
-            </div>
-            <div class="xp-bar-container" id="xp-progress-container">
-                <div class="xp-progress-bar" id="xp-progress-bar"></div>
-                <span class="xp-text" id="xp-text">0 / 1000 XP</span>
-            </div>
-        </header>
+                <div class="xp-bar-container">
+                    <div class="xp-progress-bar" id="xp-progress-bar"></div>
+                    <span class="xp-text" id="xp-text">0 / 100 XP</span>
+                </div>
+            </header>
 
-        <main>
-            <section class="money-display">
-                <p>Pièces: <span id="coins-display">0</span></p>
-                <p>Gemmes: <span id="gems-display">0</span></p>
-            </section>
+            <main>
+                <div class="money-display">
+                    <p>Or : <span id="gold-display">0</span></p>
+                    <p>Diamants : <span id="diamond-display">0</span></p>
+                </div>
 
-            <section class="controls">
-                <button id="open-add-quest-modal-btn" class="main-button" style="max-width:30%";>Ajouter une Quête</button>
-                <button id="open-filters-modal-btn" class="main-button"style="max-width:30%";>Filtres & Tri</button>
-                <button id="open-shop-modal-btn" class="main-button"style="max-width:30%";>Boutique</button>
-            </section>
+                <div class="controls">
+                    <button id="open-add-quest-modal" class="main-button">Ajouter une quête</button>
+                    <button id="open-shop-modal" class="secondary-button">Boutique</button>
+                </div>
 
-            <section class="quest-list-section">
-                <h2>Mes Quêtes</h2>
-                <ul id="mesQuetes" class="quest-list">
-                    </ul>
-            </section>
-        </main>
+                <div class="quest-list-section">
+                    <h2>Quêtes actuelles</h2>
+                    <ul class="quest-list" id="quest-list">
+                        </ul>
+                    <p id="no-quest-message" class="no-quest-message hidden">
+                        Vous n'avez pas de quête pour le moment.<br>
+                        Cliquez sur "Ajouter une quête" pour commencer !
+                    </p>
+                </div>
+            </main>
 
-        <footer>
-            <div class="theme-switch-wrapper" >
-                <label class="theme-switch" for="checkbox" style="text-aling:center;">
-                    <input type="checkbox" id="checkbox" />
-                    <div class="slider round"></div>
-                </label>
-                <em>Thème Sombre</em>
-            </div>
-        </footer>
-    </div>
+            <footer>
+                <div class="theme-switch-wrapper">
+                    <label class="theme-switch" for="theme-toggle">
+                        <input type="checkbox" id="theme-toggle">
+                        <div class="slider round"></div>
+                    </label>
+                    <p>Thème sombre</p>
+                </div>
+                <button id="logout-button" class="secondary-button">Se déconnecter</button>
+            </footer>
 
-    <div id="profile-modal" class="modal">
-        <div class="modal-content profile-modal-content">
-            <span class="close-button" id="close-profile-modal-btn">&times;</span>
-            <h2>Votre Profil</h2>
-            <div class="modal-profile-pic-area">
-                <img src="dem.png" alt="Photo de profil" id="modal-profile-picture" class="large-profile-pic">
-                <label for="profile-picture-input" class="change-pic-btn">Changer la Photo</label>
-                <input type="file" id="profile-picture-input" accept="image/*" style="display: none;">
-            </div>
-            <div class="profile-info-item">
-                <label for="user-name-input">Nom d'utilisateur:</label>
-                <input type="text" id="user-name-input" value="Aventurier Anonyme">
-            </div>
-            <p>Niveau: <span id="modal-level">1</span></p>
-            <p>XP: <span id="modal-xp">0</span></p>
-            <p>Pièces: <span id="modal-coins">0</span></p>
-            <p>Gemmes: <span id="modal-gems">0</span></p>
-            <button id="save-profile-btn" class="main-button">Sauvegarder le Profil</button>
         </div>
     </div>
 
-    <div id="quest-form-modal" class="modal">
+    <div id="quest-modal" class="modal">
         <div class="modal-content">
-            <span class="close-button" id="close-quest-form-modal-btn">&times;</span>
-            <h2 id="quest-form-title">Ajouter une Nouvelle Quête</h2>
-            <form id="add-quest-form">
-                <input type="hidden" id="hidden-quest-id">
-                <label for="quest-title">Titre de la Quête:</label>
-                <input type="text" id="quest-title" required>
+            <span class="close-button">&times;</span>
+            <h2 id="modal-title">Ajouter une quête</h2>
+            <form id="quest-form">
+                <input type="hidden" id="quest-id">
+                <label for="quest-name">Titre de la quête</label>
+                <input type="text" id="quest-name" required>
 
-                <label for="quest-description">Description:</label>
-                <textarea id="quest-description" rows="3"></textarea>
+                <label for="quest-description">Description</label>
+                <textarea id="quest-description" required></textarea>
 
-                <label for="quest-open-date">Date d'Ouverture:</label>
-                <input type="date" id="quest-open-date" required>
+                <div class="form-group-inline">
+                    <div>
+                        <label for="quest-difficulty">Difficulté</label>
+                        <select id="quest-difficulty" required>
+                            <option value="D">D - Facile</option>
+                            <option value="C">C - Normal</option>
+                            <option value="B">B - Difficile</option>
+                            <option value="A">A - Très Difficile</option>
+                            <option value="S">S - Héroïque</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="quest-due-date">Date d'échéance</label>
+                        <input type="date" id="quest-due-date">
+                    </div>
+                </div>
 
-                <label for="quest-close-date">Date de Fermeture:</label>
-                <input type="date" id="quest-close-date" required>
-
-                <label for="quest-difficulty">Difficulté:</label>
-                <select id="quest-difficulty" required>
-                    <option value="D">D (Facile)</option>
-                    <option value="C">C (Moyenne)</option>
-                    <option value="B">B (Difficile)</option>
-                    <option value="A">A (Très Difficile)</option>
-                    <option value="S">S (Légendaire)</option>
-                </select>
-
-                <label for="quest-category">Catégorie:</label>
-                <select id="quest-category">
-                    <option value="none">Aucune</option>
-                    <option value="studies">Études</option>
-                    <option value="sport">Sport</option>
-                    <option value="household">Ménage</option>
-                    <option value="personal">Personnel</option>
-                    <option value="work">Travail</option>
-                    <option value="health">Santé</option>
-                    <option value="hobby">Loisir</option>
-                    <option value="social">Social</option>
-                    <option value="finance">Finance</option>
-                    <option value="creative">Créativité</option>
-                </select>
-
-                <button type="submit" id="quest-form-submit-btn" class="main-button">Ajouter la Quête</button>
+                <button type="submit" class="main-button">Sauvegarder la quête</button>
             </form>
         </div>
     </div>
 
-    <div id="filters-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-button" id="close-filters-modal-btn">&times;</span>
-            <h2>Filtres et Tri</h2>
-            <div class="filter-group">
-                <label for="filter-status">Statut:</label>
-                <select id="filter-status">
-                    <option value="all">Toutes</option>
-                    <option value="active">Actives</option>
-                    <option value="completed">Terminées</option>
-                    <option value="future">Futures</option>
-                    <option value="expired">Expirées</option>
-                </select>
+    <div id="profile-modal" class="modal">
+        <div class="modal-content profile-modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Votre Profil</h2>
+            <div class="modal-profile-pic-area">
+                <img id="modal-profile-pic" class="large-profile-pic" src="https://via.placeholder.com/100" alt="Photo de profil large">
+                <div class="profile-options-buttons">
+                    <button id="change-pic-btn" class="secondary-button">Changer la photo</button>
+                    <button id="delete-pic-btn" class="secondary-button">Supprimer la photo</button>
+                </div>
+                <input type="file" id="profile-pic-upload" accept="image/*" style="display: none;">
             </div>
-            <div class="filter-group">
-                <label for="filter-difficulty">Difficulté:</label>
-                <select id="filter-difficulty">
-                    <option value="all">Toutes</option>
-                    <option value="D">D</option>
-                    <option value="C">C</option>
-                    <option value="B">B</option>
-                    <option value="A">A</option>
-                    <option value="S">S</option>
-                </select>
+            <div class="profile-info-item">
+                <label for="modal-username">Nom d'utilisateur</label>
+                <input type="text" id="modal-username" placeholder="Entrez votre nom">
             </div>
-            <div class="filter-group">
-                <label for="filter-category">Catégorie:</label>
-                <select id="filter-category">
-                    <option value="all">Toutes</option>
-                    <option value="studies">Études</option>
-                    <option value="sport">Sport</option>
-                    <option value="household">Ménage</option>
-                    <option value="personal">Personnel</option>
-                    <option value="work">Travail</option>
-                    <option value="health">Santé</option>
-                    <option value="hobby">Loisir</option>
-                    <option value="social">Social</option>
-                    <option value="finance">Finance</option>
-                    <option value="creative">Créativité</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label for="sort-order">Trier par:</label>
-                <select id="sort-order">
-                    <option value="none">Aucun</option>
-                    <option value="difficulty-asc">Difficulté (Croissant)</option>
-                    <option value="difficulty-desc">Difficulté (Décroissant)</option>
-                    <option value="open-date-asc">Date d'Ouverture (Anciennes en premier)</option>
-                    <option value="open-date-desc">Date d'Ouverture (Récentes en premier)</option>
-                    <option value="close-date-asc">Date de Fermeture (Proches en premier)</option>
-                    <option value="close-date-desc">Date de Fermeture (Lointaines en premier)</option>
-                </select>
-            </div>
-            <div class="filter-actions">
-                <button id="apply-filters-btn" class="main-button">Appliquer les Filtres</button>
-                <button id="reset-filters-btn" class="secondary-button">Réinitialiser</button>
-            </div>
+            <button id="save-profile-btn" class="main-button">Sauvegarder le profil</button>
         </div>
     </div>
 
     <div id="shop-modal" class="modal">
         <div class="modal-content">
-            <span class="close-button" id="close-shop-modal-btn">&times;</span>
-            <h2>Boutique de l'Aventurier</h2>
+            <span class="close-button">&times;</span>
+            <h2>Boutique</h2>
             <div class="shop-item">
-                <h3>Pack "100 pieces"</h3>
-                <p>Reçu: 100 pieces</p>
-                <p class="price">Prix: 1 Gemme</p>
-                <button class="buy-item-btn" data-item="euro">Acheter</button>
+                <h3>Potion de Vie</h3>
+                <p>Restaure 100 XP.</p>
+                <p class="price">100 Or</p>
+                <button class="buy-item-btn" data-item="potion_xp">Acheter</button>
             </div>
             <div class="shop-item">
-                <h3>Pack "1 Gemme"</h3>
-                <p>Reçu: 1 Gemme</p>
-                <p class="price">Prix: 100 pieces</p>
-                <button class="buy-item-btn" data-item="plaisir">Acheter</button>
+                <h3>Sac de Diamants</h3>
+                <p>Ajoute 10 diamants à votre solde.</p>
+                <p class="price">500 Or</p>
+                <button class="buy-item-btn" data-item="diamonds_pack">Acheter</button>
             </div>
-        </div> </div>
-
+            <div class="shop-item">
+                <h3>Anneau de Pouvoir</h3>
+                <p>Augmente le gain d'XP de 10% pour 24h.</p>
+                <p class="price">1 Diamant</p>
+                <button class="buy-item-btn" data-item="power_ring">Acheter</button>
+            </div>
+        </div>
+    </div>
 
     <div id="custom-alert-modal" class="modal">
         <div class="modal-content">
-            <span class="close-button" id="close-alert-modal-btn">&times;</span>
+            <span class="close-button">&times;</span>
             <h2 id="custom-alert-title"></h2>
             <p id="custom-alert-message"></p>
-            <button id="custom-alert-ok-btn" class="main-button">OK</button>
-        </div> </div>
+            <div id="custom-alert-buttons">
+                <button id="custom-alert-ok-btn" class="main-button hidden">OK</button>
+                <button id="custom-alert-confirm-btn" class="main-button hidden">Confirmer</button>
+                <button id="custom-alert-cancel-btn" class="secondary-button hidden">Annuler</button>
+            </div>
+        </div>
+    </div>
 
     <script src="script.js"></script>
-    <script src="notif.js"></script>
-    <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/service-worker.js')
-        .then(registration => {
-          console.log('Service Worker enregistré avec succès !');
-        })
-        .catch(err => {
-          console.error('Échec de l\'enregistrement du Service Worker :', err);
-        });
-    });
-  }
-</script>
 </body>
-
 </html>
