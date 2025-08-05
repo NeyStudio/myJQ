@@ -3,12 +3,18 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>JournalyQuest - Votre Aventure Quotidienne</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<title>My JournalyQuest</title>
+<style>
+    body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+    .form-container { max-width: 400px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
+    input { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; }
+    button { width: 100%; padding: 10px; background-color: #007BFF; color: white; border: none; border-radius: 5px; cursor: pointer; }
+</style>
     <link rel="stylesheet" href="style.css">
-    <link rel="apple-touch-icon" href="images/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
   <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#3498db">
   
@@ -222,6 +228,84 @@
             <button id="custom-alert-ok-btn" class="main-button">OK</button>
         </div> </div>
 
+    <div class="form-container">
+    <h2>Inscription</h2>
+    <form id="signup-form">
+        <input type="email" id="signup-email" placeholder="Adresse e-mail" required>
+        <input type="password" id="signup-password" placeholder="Mot de passe" required>
+        <button type="submit">S'inscrire</button>
+    </form>
+    <p id="error-message" style="color: red;"></p>
+    <p id="success-message" style="color: green;"></p>
+</div>
+
+<script type="module">
+    // Importation des modules Firebase nécessaires
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // Votre configuration Firebase (celle que vous avez fournie)
+    const firebaseConfig = {
+        apiKey: "AIzaSyCV1t8IhdDklnc07nPR_p5ZFKv3FAjaBi0",
+        authDomain: "myjq-6193b.firebaseapp.com",
+        projectId: "myjq-6193b",
+        storageBucket: "myjq-6193b.firebasestorage.app",
+        messagingSenderId: "42824522485",
+        appId: "1:42824522485:web:85977e1d5f6f620a1cc3bc"
+    };
+
+    // Initialisation des services Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Récupération des éléments du formulaire
+    const signupForm = document.getElementById('signup-form');
+    const emailInput = document.getElementById('signup-email');
+    const passwordInput = document.getElementById('signup-password');
+    const errorMessage = document.getElementById('error-message');
+    const successMessage = document.getElementById('success-message');
+
+    // Événement de soumission du formulaire
+    signupForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const email = emailInput.value;
+        const password = passwordInput.value;
+
+        errorMessage.textContent = '';
+        successMessage.textContent = '';
+
+        try {
+            // Inscription de l'utilisateur
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+            
+            // Sauvegarde du profil dans Firestore
+            await setDoc(doc(db, "users", user.uid), {
+                email: user.email,
+                creationDate: new Date()
+            });
+
+            successMessage.textContent = "Inscription réussie !";
+            console.log('Utilisateur inscrit et profil créé :', user);
+            signupForm.reset();
+
+        } catch (error) {
+            let msg = "Une erreur est survenue.";
+            if (error.code === 'auth/email-already-in-use') {
+                msg = "Cette adresse e-mail est déjà utilisée.";
+            } else if (error.code === 'auth/weak-password') {
+                msg = "Le mot de passe doit contenir au moins 6 caractères.";
+            }
+            errorMessage.textContent = msg;
+            console.error("Erreur d'inscription :", error.message);
+        }
+    });
+</script>
+
+
     <script src="script.js"></script>
     <script src="notif.js"></script>
     <script>
@@ -237,7 +321,6 @@
     });
   }
 </script>
-
 </body>
 
 </html>
