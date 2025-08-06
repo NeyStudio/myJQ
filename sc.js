@@ -274,7 +274,6 @@ document.addEventListener('DOMContentLoaded', () => {
          modalProfilePicture.src = userProfilePicture;
          profilePicture.src = userProfilePicture;
          showAlert('Photo de profil', 'Votre photo de profil a été restaurée par défaut!');
-         saveProfile();
     }
     // Fonction pour basculer le statut d'une quête (terminée/active) et gérer l'XP
     function toggleQueteStatus(id) {
