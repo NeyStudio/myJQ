@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Références DOM principales
     const profilePictureContainer = document.getElementById('profile-picture-container');
     const profilePicture = document.getElementById('profile-picture');
-    const defaultPicture = "https://images.app.goo.gl/WqzWrjCZeFKSCYpZ6.png";
+    const defaultPicture = "logo.png";
     const levelBadgeContainer = document.getElementById('level-badge');
     const levelBadgeText = levelBadgeContainer.querySelector('span');
     const xpProgressContainer = document.getElementById('xp-progress-container');
@@ -270,11 +270,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // Fonction pour supprimer la photo de profilePicture
     function deletePicture() {
-         userProfilePicture = defaultPicture;
-         modalProfilePicture.src = userProfilePicture;
-         profilePicture.src = userProfilePicture;
+         userProfilePic = defaultPicture;
+         modalProfilePicture.src = userProfilePic;
+         profilePicture.src = userProfilePic;
          showAlert('Photo de profil', 'Votre photo de profil a été restaurée par défaut!');
-         saveAndRenderAll();
+         saveProfile();
     }
     // Fonction pour basculer le statut d'une quête (terminée/active) et gérer l'XP
     function toggleQueteStatus(id) {
