@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Références DOM principales
     const profilePictureContainer = document.getElementById('profile-picture-container');
     const profilePicture = document.getElementById('profile-picture');
-    const defaultPicture = "https://images.app.goo.gl/WqzWrjCZeFKSCYpZ6";
+    const defaultPicture = "https://images.app.goo.gl/WqzWrjCZeFKSCYpZ6.png";
     const levelBadgeContainer = document.getElementById('level-badge');
     const levelBadgeText = levelBadgeContainer.querySelector('span');
     const xpProgressContainer = document.getElementById('xp-progress-container');
