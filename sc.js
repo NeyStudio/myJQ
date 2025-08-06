@@ -262,13 +262,6 @@ document.addEventListener('DOMContentLoaded', () => {
             showAlert('Erreur', "Impossible de trouver la quête à modifier.");
         }
     }
-    // Fonction pour initialiser la photo de profil
-    function pp(){
-      userProfilePicture = defaultPicture;
-      modalProfilePicture.src = userProfilePicture;
-      profilePicture.src = userProfilePicture;
-      saveProfile();
-    }
     // Fonction pour supprimer une quête
     function deleteQuest(id) {
         quetes = quetes.filter(quete => quete.id !== id);
