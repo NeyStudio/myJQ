@@ -218,7 +218,19 @@
             <p id="custom-alert-message"></p>
             <button id="custom-alert-ok-btn" class="main-button">OK</button>
         </div> </div>
-
+    <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker enregistré avec succès !');
+        })
+        .catch(err => {
+          console.error('Échec de l\'enregistrement du Service Worker :', err);
+        });
+    });
+  }
+</script>
     <script src="sc.js"></script>
     <script src="notif.js"></script>
 </body>
