@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Références DOM principales
     const profilePictureContainer = document.getElementById('profile-picture-container');
     const profilePicture = document.getElementById('profile-picture');
+    const defaultPicture = "dem.png";
     const levelBadgeContainer = document.getElementById('level-badge');
     const levelBadgeText = levelBadgeContainer.querySelector('span');
     const xpProgressContainer = document.getElementById('xp-progress-container');
@@ -54,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalGemsDisplay = document.getElementById('modal-gems');
     const closeProfileModalBtn = document.getElementById('close-profile-modal-btn');
     const profilePictureInput = document.getElementById('profile-picture-input');
+    const profilePictureDelete = document.getElementById('profile-picture-delete');
     const userNameInput = document.getElementById('user-name-input');
     const saveProfileBtn = document.getElementById('save-profile-btn');
 
@@ -260,14 +262,27 @@ document.addEventListener('DOMContentLoaded', () => {
             showAlert('Erreur', "Impossible de trouver la quête à modifier.");
         }
     }
-
+    // Fonction pour initialiser la photo de profil
+    function pp(){
+      userProfilePicture = defaultPicture;
+      modalProfilePicture.src = userProfilePicture;
+      profilePicture.src = userProfilePicture;
+      saveProfile();
+    }
     // Fonction pour supprimer une quête
     function deleteQuest(id) {
         quetes = quetes.filter(quete => quete.id !== id);
         showAlert('Quête Supprimée', "La quête a été supprimée avec succès.");
         saveAndRenderAll();
     }
-
+    // Fonction pour supprimer la photo de profilePicture
+    function deletePicture() {
+         userProfilePicture = defaultPicture;
+         modalProfilePicture.src = userProfilePicture;
+         profilePicture.src = userProfilePicture;
+         showAlert('Photo de profil', 'Votre photo de profil a été restaurée par défaut!');
+         saveProfile();
+    }
     // Fonction pour basculer le statut d'une quête (terminée/active) et gérer l'XP
     function toggleQueteStatus(id) {
         const quete = quetes.find(q => q.id === id);
@@ -666,7 +681,7 @@ document.addEventListener('DOMContentLoaded', () => {
     closeProfileModalBtn.addEventListener('click', () => {
         closeModal(profileModal);
     });
-
+    
     // Enregistrement du nom d'utilisateur et de la photo
     saveProfileBtn.addEventListener('click', () => {
         userName = userNameInput.value.trim();
@@ -688,7 +703,14 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.readAsDataURL(file);
         }
     });
-
+    profilePictureDelete.addEventListener('click', (event) => {
+        showAlert('Confirmer la suppression', 'Êtes-vous sûr de vouloir supprimer votre photo de profil', true)
+        .then(result => {
+        if(result) {
+          deletePicture();
+        }
+        });
+    });
     // Modale de formulaire de quête (ajout/modification)
     openAddQuestModalBtn.addEventListener('click', () => {
         openQuestFormModal();
