@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Références DOM principales
     const profilePictureContainer = document.getElementById('profile-picture-container');
     const profilePicture = document.getElementById('profile-picture');
-    const defaultPicture = "dem.png";
+    const defaultPicture = "https://github.com/NeyStudio/myJQ/blob/main/dem.png";
     const levelBadgeContainer = document.getElementById('level-badge');
     const levelBadgeText = levelBadgeContainer.querySelector('span');
     const xpProgressContainer = document.getElementById('xp-progress-container');
