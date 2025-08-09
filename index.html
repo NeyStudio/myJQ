@@ -3,12 +3,11 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
     <title>JournalyQuest - Votre Aventure Quotidienne</title>
-
+    <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="style.css">
-    <link rel="apple-touch-icon" href="images/icons/icon-192x192.png">
-    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
     <meta name="theme-color" content="#3498db">
 
     </head>
@@ -24,7 +23,7 @@
         <header>
             <div class="profile-area">
                 <div class="profile-picture-container" id="profile-picture-container">
-                    <img src="https://github.com/NeyStudio/myJQ/blob/main/dem.png" alt="Photo de profil" id="profile-picture">
+                    <img src="dem.png" alt="Photo de profil" id="profile-picture">
                     <div class="level-badge" id="level-badge"><span>1</span></div>
                 </div>
                 <h2 id="user-name-display">Aventurier Anonyme</h2>
@@ -70,7 +69,7 @@
             <span class="close-button" id="close-profile-modal-btn">&times;</span>
             <h2>Votre Profil</h2>
             <div class="modal-profile-pic-area">
-                <img src="https://github.com/NeyStudio/myJQ/blob/main/dem.png" alt="Photo de profil" id="modal-profile-picture" class="large-profile-pic">
+                <img src="dem.png" alt="Photo de profil" id="modal-profile-picture" class="large-profile-pic">
                 <div style="display:flex; gap:10px"><label for="profile-picture-input" class="change-pic-btn">Changer la Photo</label>
                 <label for="profile-picture-delete" class="change-pic-btn">Supprimer la photo</label></div>
                 <input type="file" id="profile-picture-input" accept="image/*" style="display: none;">
@@ -221,7 +220,19 @@
             <p id="custom-alert-message"></p>
             <button id="custom-alert-ok-btn" class="main-button">OK</button>
         </div> </div>
-
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker enregistré avec succès:', registration);
+                    })
+                    .catch(error => {
+                        console.error('Échec de l\'enregistrement du Service Worker:', error);
+                    });
+            });
+        }
+    </script>
     <script src="sc.js"></script>
     <script src="notif.js"></script>
 </body>

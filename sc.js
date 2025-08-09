@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. Déclarations des Constantes et Variables d'état
 
     // Constantes de jeu (XP et Gemmes par difficulté, niveaux, monnaies)
+    const applicationServerKey = "BK0seamUKXsLFEQEXytaDWTl1C0TgsuRt4jpWOx2zbi1VidYl_Nn5f7kO2x2ES4lnh7tjVxFBFip_rRCw3vnOSI"; 
     const XP_PER_DIFFICULTY = { 'D': 50, 'C': 100, 'B': 200, 'A': 500, 'S': 1000 };
     const GEMS_PER_DIFFICULTY = { 'D': 0, 'C': 0, 'B': 1, 'A': 3, 'S': 5 };
     const BASE_XP_FOR_LEVEL_UP = 1000;
@@ -26,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Références DOM principales
     const profilePictureContainer = document.getElementById('profile-picture-container');
     const profilePicture = document.getElementById('profile-picture');
-    const defaultPicture = "logo.png";
+    const defaultPicture = "pp.png";
     const levelBadgeContainer = document.getElementById('level-badge');
     const levelBadgeText = levelBadgeContainer.querySelector('span');
     const xpProgressContainer = document.getElementById('xp-progress-container');
@@ -131,6 +132,76 @@ document.addEventListener('DOMContentLoaded', () => {
      * @param {boolean} [isConfirm=false] - Si true, affiche des boutons "Oui/Non" et retourne une Promise.
      * @returns {Promise<boolean>|void} Une Promise qui se résout à true pour "Oui" / "OK" ou false pour "Non" si isConfirm est true.
      */
+     // Fonction pour demander la permission de notification et s'abonner
+function requestNotificationPermissionAndSubscribe() {
+    // Vérifie si les API sont supportées par le navigateur
+    if ('Notification' in window && 'serviceWorker' in navigator) {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                console.log('Permission de notification accordée.');
+                subscribeUserToPush();
+            } else {
+                console.log('Permission de notification refusée.');
+            }
+        });
+    }
+}
+
+     
+     // Fonction pour s'abonner aux notifications push
+function subscribeUserToPush() {
+    navigator.serviceWorker.ready.then(registration => {
+        // **À MODIFIER : Remplacez par votre clé VAPID publique**
+        const applicationServerKey = '7vQfG7xV_DuUBJSyAzTBLXULOmR86e8UPKbUQ6414go'; 
+        const subscribeOptions = {
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(applicationServerKey)
+        };
+
+        return registration.pushManager.subscribe(subscribeOptions);
+    }).then(subscription => {
+        console.log('Abonnement push réussi:', subscription);
+        // Envoie l'objet d'abonnement au serveur
+        sendSubscriptionToServer(subscription);
+    }).catch(error => {
+        console.error('Erreur lors de l\'abonnement push:', error);
+    });
+}
+
+// Fonction pour envoyer l'abonnement à votre serveur
+function sendSubscriptionToServer(subscription) {
+    // **À MODIFIER : Adaptez l'URL si besoin, si votre serveur utilise une autre route**
+    fetch('/api/subscribe', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(subscription)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Échec de l\'envoi de l\'abonnement au serveur.');
+        }
+        console.log('Abonnement envoyé au serveur avec succès.');
+    })
+    .catch(error => console.error(error));
+}
+
+// Fonction utilitaire pour la conversion de la clé VAPID
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+     
     function showAlert(title, message, isConfirm = false) {
         return new Promise(resolve => {
             customAlertTitle.textContent = title;
@@ -204,6 +275,29 @@ document.addEventListener('DOMContentLoaded', () => {
             openModal(customAlertModal);
         });
     }
+  // sc.js
+
+// ... (le reste de votre code, incluant les fonctions `requestNotificationPermissionAndSubscribe` et `subscribeUserToPush`)
+
+// Événement au chargement complet de la page
+document.addEventListener('DOMContentLoaded', () => {
+    // Appelle la fonction qui demande la permission et s'abonne
+    // Cette action se fera automatiquement une fois la page chargée
+    requestNotificationPermissionAndSubscribe();
+    
+    // N'oubliez pas d'enregistrer votre Service Worker si ce n'est pas déjà fait !
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(registration => {
+                    console.log('Service Worker enregistré avec succès:', registration);
+                })
+                .catch(error => {
+                    console.error('Échec de l\'enregistrement du Service Worker:', error);
+                });
+        });
+    }
+});
 
     // Fonctions d'ouverture/fermeture génériques de modales
     function openModal(modalElement) {
