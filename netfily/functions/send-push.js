@@ -1,60 +1,67 @@
 // netlify/functions/send-push.js
 
 const webpush = require('web-push');
+const faunadb = require('faunadb');
+const q = faunadb.query;
+
+const client = new faunadb.Client({
+    secret: process.env.FAUNADB_SERVER_SECRET
+});
+
+webpush.setVapidDetails(
+    'mailto:votre-email@exemple.com',
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+);
 
 exports.handler = async (event, context) => {
-    // Cette fonction sera déclenchée à des heures spécifiques.
-    // Vous devez d'abord vous assurer que le package `web-push` est installé.
-    // Pour un projet Netlify, vous pouvez le faire en créant un fichier `package.json`
-    // et en installant la dépendance.
+    try {
+        const now = new Date();
+        const currentHour = now.getHours();
+        
+        let notificationPayload;
 
-    const vapidKeys = {
-        publicKey: process.env.VAPID_PUBLIC_KEY,
-        privateKey: process.env.VAPID_PRIVATE_KEY
-    };
+        if (currentHour === 6) {
+            notificationPayload = {
+                title: "Bonjour ! C'est 6h.",
+                body: "Il est temps de commencer votre journée. Voici votre première notification."
+            };
+        } else if (currentHour === 12) {
+            notificationPayload = {
+                title: "Il est midi, l'heure de manger !",
+                body: "Faites une pause bien méritée. N'oubliez pas nos nouvelles recettes."
+            };
+        } else if (currentHour === 18) {
+            notificationPayload = {
+                title: "Bonne fin de journée ! 18h.",
+                body: "Votre journée de travail est terminée. Jetez un œil à nos derniers articles."
+            };
+        }
 
-    webpush.setVapidDetails(
-        'mailto:votre-email@exemple.com',
-        vapidKeys.publicKey,
-        vapidKeys.privateKey
-    );
-    
-    // Simuler l'heure actuelle pour l'exemple
-    const now = new Date();
-    const currentHour = now.getHours();
+        if (notificationPayload) {
+            // Récupère tous les abonnements depuis la base de données
+            const subscriptions = await client.query(
+                q.Map(
+                    q.Paginate(q.Match(q.Index('all_subscriptions'))),
+                    q.Lambda('X', q.Get(q.Var('X')))
+                )
+            );
 
-    let notificationPayload;
-
-    if (currentHour === 6) {
-        notificationPayload = {
-            title: "Bonjour ! C'est 6h.",
-            body: "Il est temps de commencer votre journée. Voici votre première notification."
-        };
-    } else if (currentHour === 12) {
-        notificationPayload = {
-            title: "Il est midi, l'heure de manger !",
-            body: "Faites une pause bien méritée. N'oubliez pas nos nouvelles recettes."
-        };
-    } else if (currentHour === 18) {
-        notificationPayload = {
-            title: "Bonne fin de journée ! 18h.",
-            body: "Votre journée de travail est terminée. Jetez un œil à nos derniers articles."
-        };
-    }
-
-    if (notificationPayload) {
-        // Supposons que vous ayez une liste d'abonnements stockée
-        const subscriptions = getStoredSubscriptions(); // Fonction pour récupérer vos abonnements
-
-        subscriptions.forEach(sub => {
-            webpush.sendNotification(sub, JSON.stringify(notificationPayload)).catch(error => {
-                console.error('Erreur lors de l\'envoi de la notification:', error);
+            subscriptions.data.forEach(sub => {
+                webpush.sendNotification(sub.data, JSON.stringify(notificationPayload)).catch(error => {
+                    console.error('Erreur lors de l\'envoi de la notification:', error);
+                });
             });
-        });
+        }
+        
+        return {
+            statusCode: 200,
+            body: 'Notifications envoyées.'
+        };
+    } catch (error) {
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ error: error.message })
+        };
     }
-
-    return {
-        statusCode: 200,
-        body: 'Notifications envoyées.'
-    };
 };
