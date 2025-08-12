@@ -31,7 +31,7 @@ exports.handler = async (event, context) => {
                 title: "Il est midi, l'heure de manger !",
                 body: "Faites une pause bien méritée. N'oubliez pas nos nouvelles recettes."
             };
-        } else if (currentHour === 18) {
+        } else if (currentHour === 20) {
             notificationPayload = {
                 title: "Bonne fin de journée ! 18h.",
                 body: "Votre journée de travail est terminée. Jetez un œil à nos derniers articles."
