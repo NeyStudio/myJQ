@@ -4,7 +4,7 @@
   "description": "Gerer et organiser ses taches au quotidien n´a jamais ete aussi simple",
   "start_url": "start.html",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#4169e1",
   "theme_color": "#000000",
   "icons": [
    {
