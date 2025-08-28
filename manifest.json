@@ -2,7 +2,7 @@
   "name": "My Journaly Quest",
   "short_name": "JournalyQuest",
   "description": "Gerer et organiser ses taches au quotidien n´a jamais ete aussi simple",
-  "start_url": "index.html",
+  "start_url": "start.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",

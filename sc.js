@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
         splashScreen.addEventListener('transitionend', () => {
             splashScreen.style.display = 'none';
         }, { once: true });
-    }, 1500); // Reste 1.5 secondes visible
+    }, 500); // Reste 1.5 secondes visible
 
     // ---
     // 3. Déclarations des Constantes et Variables d'état

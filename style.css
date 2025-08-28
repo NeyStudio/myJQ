@@ -768,7 +768,7 @@ input:checked + .slider:before {
     border-radius: 50%;
     width: 40px;
     height: 40px;
-    animation: spin 1s linear infinite;
+    animation: spin 1s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
     margin-top: 30px;
 }
 
