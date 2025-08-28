@@ -39,6 +39,8 @@ const urlsToCache = [
   '/',
   '/start.html',
   '/styles.css',
+  '/index.html',
+  '/sc.js',
   '/logo.png'
 ];
 
