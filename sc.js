@@ -1,5 +1,14 @@
-// Pas d'enregistrement de Service Worker si les notifications sont retirées, car il est souvent lié aux push notifications.
-// Si vous utilisez un Service Worker pour d'autres fonctionnalités PWA (cache, offline), vous devrez réintégrer cette partie séparément.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(registration => {
+        console.log('Service Worker enregistré avec succès:', registration.scope);
+      })
+      .catch(error => {
+        console.log('Échec de l\'enregistrement du Service Worker:', error);
+      });
+  });
+}
 
 // 2. Logique de la page d'ouverture (Splash Screen) et initialisation de l'application
 document.addEventListener('DOMContentLoaded', () => {
@@ -27,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Références DOM principales
     const profilePictureContainer = document.getElementById('profile-picture-container');
     const profilePicture = document.getElementById('profile-picture');
-    const defaultPicture = "pp.png";
+    const defaultPicture = "/logo.png";
     const levelBadgeContainer = document.getElementById('level-badge');
     const levelBadgeText = levelBadgeContainer.querySelector('span');
     const xpProgressContainer = document.getElementById('xp-progress-container');
@@ -94,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Variables d'état (let) - Initialisation à partir de localStorage ou valeurs par défaut
     let quetes = JSON.parse(localStorage.getItem('quetes')) || [];
     let userXp = parseInt(localStorage.getItem('userXp') || '0');
-    let userProfilePic = localStorage.getItem('userProfilePic') || 'images/default-profile.png';
+    let userProfilePic = localStorage.getItem('userProfilePic') || '/logo.png';
     let userName = localStorage.getItem('userName') || 'Aventurier Anonyme';
     let userCoins = parseInt(localStorage.getItem('userCoins') || '0');
     let userGems = parseInt(localStorage.getItem('userGems') || '0');
@@ -368,7 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
          modalProfilePicture.src = userProfilePic;
          profilePicture.src = userProfilePic;
          showAlert('Photo de profil', 'Votre photo de profil a été restaurée par défaut!');
-         saveProfile();
+        saveAndRenderAll(false);
     }
     // Fonction pour basculer le statut d'une quête (terminée/active) et gérer l'XP
     function toggleQueteStatus(id) {
