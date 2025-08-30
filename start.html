@@ -4,22 +4,63 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JournalyQuest</title>
-    <link rel="stylesheet" href="style.css">
     <link rel="apple-touch-icon" href="icon-192x192.png">
     <meta name="theme-color" content="#3498db">
+    <link rel="stylesheet" href="style.css">
+        <style>
+        #lottie-wind-container {
+            position: absolute;
+            left: 90%;
+            bottom: 40%;
+            width: 100%;
+            z-index: 2;
+            transform: translateX(-100%);
+            opacity: 0;
+            animation: showLottieWind 2.5s ease-in-out forwards;
+            animation-delay: 0.3s;
+            animation: fade 2.6s;
+        }
+
+        .content-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            animation: fadeInContent 1.30s ease-out forwards;
+            animation-delay: 1.7s; 
+            z-index: 1; 
+        }
+
+        @keyframes fadeInContent {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+         @keyframes fade {
+            0% {
+                opacity: 1;
+            }
+            80%{
+              opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+    </style>
 <body>
       <div id="splash-screen" class="splash-screen">
-        <img src="logo.png" alt="JournalyQuest Logo" class="splash-logo">
-        <div class="splash-title">JournalyQuest</div>
-        <div class="splash-spinner"></div>
-    </div>
-
-    <script>
-        // Redirige vers la page principale après 3 secondes
-        setTimeout(function() {
-            window.location.href = 'index.html';
-        }, 2500); 
-    </script>
+          <div id="lottie-wind-container"></div>
+          <div class="content-container">
+            <img src="logo.png" alt="JournalyQuest Logo" class="splash-logo" style="Animation:none;">
+            <div class="splash-title">JournalyQuest</div>
+            <div class="splash-spinner" style="Animation:none;"></div>
+          </div>
+      </div>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -33,5 +74,20 @@
             });
         }
     </script>
+    <script src="lottie.min.js"></script>
+    <script>
+    lottie.loadAnimation({
+    container: document.getElementById('lottie-wind-container'),
+    renderer: 'svg',
+    loop: false,
+    autoplay: true,
+    path: 'wind.json' // Chemin vers votre fichier Lottie
+});
+</script>
+ <script>
+    setTimeout(function() {
+      window.location.href = 'index.html';
+        }, 2500); 
+  </script>
 </body>
 </html>
