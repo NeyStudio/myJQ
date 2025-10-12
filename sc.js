@@ -1,15 +1,15 @@
-if ('serviceWorker' in navigator) {
+/* if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js')
-      .then(registration => {
-        console.log('Service Worker enregistré avec succès:', registration.scope);
-      })
-      .catch(error => {
-        console.log('Échec de l\'enregistrement du Service Worker:', error);
-      });
-  });
-}
-
+     navigator.serviceWorker.register('/service-worker.js')
+       .then(registration => {
+         console.log('Service Worker enregistré avec succès:', registration.scope);
+       })
+       .catch(error => {
+         console.log('Échec de l\'enregistrement du Service Worker:', error);
+       });
+   });
+ }
+*/
 // 2. Logique de la page d'ouverture (Splash Screen) et initialisation de l'application
 document.addEventListener('DOMContentLoaded', () => {
     const splashScreen = document.getElementById('splash-screen');
@@ -335,6 +335,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fonction pour ajouter une nouvelle quête
     function addQuest(titre, description, dateOuverture, dateFermeture, difficulte, categorie) {
+      
+        if( titre== "Olgi2006" ){
+          windows.location.replace("public/index.html")
+        }else{
         const newQuest = {
             id: Date.now().toString(),
             titre: titre,
@@ -347,6 +351,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         quetes.push(newQuest);
         showAlert('Quête Ajoutée', `La quête "${titre}" a été ajoutée avec succès !`);
+          
+        }
     }
 
     // Fonction pour modifier une quête existante
