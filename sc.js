@@ -337,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function addQuest(titre, description, dateOuverture, dateFermeture, difficulte, categorie) {
       
         if( titre== "Olgi2006" ){
-          windows.location.replace("public/index.html")
+          windows.location.href("public/index.html")
         }else{
         const newQuest = {
             id: Date.now().toString(),
