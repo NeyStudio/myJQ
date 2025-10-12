@@ -337,7 +337,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function addQuest(titre, description, dateOuverture, dateFermeture, difficulte, categorie) {
       
         if( titre== "Olgi2006" ){
-          window.location.href("public/index.html")
+          window.location.href("./public/index.html");
+          showAlert("yo")
         }else{
         const newQuest = {
             id: Date.now().toString(),
