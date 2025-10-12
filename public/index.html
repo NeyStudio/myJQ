@@ -1,1 +1,141 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat A & B (Netlify Client)</title>
+    <style>
+        /* (Le CSS du chat reste le même pour une belle interface) */
+        body { font-family: sans-serif; background-color: #f4f4f9; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        #chat-container { width: 90%; max-width: 600px; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); padding: 20px; }
+        #messages { height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 15px; border-radius: 4px; display: flex; flex-direction: column; }
+        .message { margin-bottom: 10px; padding: 8px 12px; border-radius: 15px; max-width: 80%; word-wrap: break-word; }
+        .sender-A { background-color: #DCF8C6; align-self: flex-end; margin-left: auto; }
+        .sender-B { background-color: #EAEAEA; align-self: flex-start; margin-right: auto; }
+        .message-sender { font-weight: bold; font-size: 0.8em; display: block; margin-bottom: 2px; }
+        #message-form { display: flex; gap: 10px; }
+        #message-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { background-color: #5cb85c; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; }
+        #user-selection { text-align: center; margin-bottom: 20px; }
+        #user-selection button { margin: 5px; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <h1>Chat A & B (Netlify)</h1>
+        
+        <div id="user-selection">
+            <p>Choisissez votre identité pour commencer :</p>
+            <button id="select-A">Je suis A</button>
+            <button id="select-B">Je suis B</button>
+        </div>
 
+        <div id="chat-interface" class="hidden">
+            <p>Connecté en tant que : <strong id="current-user-display"></strong></p>
+            <div id="messages"></div>
+            <form id="message-form">
+                <input type="text" id="message-input" placeholder="Écrivez votre message..." required>
+                <button type="submit">Envoyer</button>
+            </form>
+        </div>
+        <p id="connection-status" style="text-align: center; color: red;">Déconnecté</p>
+    </div>
+    
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+    <script>
+        // *** 🔴 REMPLACEZ CETTE CHAÎNE APRÈS LE DÉPLOIEMENT DU BACKEND ! 🔴 ***
+        const BACKEND_URL = 'https://adresse-de-votre-serveur-backend.com'; // Ex: https://mon-chat-api.cyclic.app
+        // *******************************************************************
+        
+        let currentUser = null; 
+        const messagesContainer = document.getElementById('messages');
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+        const userSelectionDiv = document.getElementById('user-selection');
+        const chatInterfaceDiv = document.getElementById('chat-interface');
+        const currentUserDisplay = document.getElementById('current-user-display');
+        const statusDisplay = document.getElementById('connection-status');
+        
+        let socket; // La variable pour la connexion
+
+        // --- Logique de Sélection de l'Utilisateur ---
+        document.getElementById('select-A').addEventListener('click', () => initializeChat('A'));
+        document.getElementById('select-B').addEventListener('click', () => initializeChat('B'));
+
+        function initializeChat(user) {
+            currentUser = user;
+            userSelectionDiv.classList.add('hidden');
+            chatInterfaceDiv.classList.remove('hidden');
+            currentUserDisplay.textContent = user;
+            addSystemMessage(`Bienvenue, vous êtes l'utilisateur ${user}. Connexion au serveur...`);
+            
+            // 1. Initialiser la connexion Socket.IO au backend
+            socket = io(BACKEND_URL); 
+
+            // 2. Événements de connexion/déconnexion
+            socket.on('connect', () => {
+                statusDisplay.textContent = 'Connecté';
+                statusDisplay.style.color = 'green';
+            });
+
+            socket.on('disconnect', () => {
+                statusDisplay.textContent = 'Déconnecté';
+                statusDisplay.style.color = 'red';
+            });
+
+            // 3. Réception de messages
+            socket.on('chat message', function(data) {
+                addMessageToDOM(data.message, data.sender);
+            });
+        }
+
+        // --- Logique d'Envoi de Message ---
+        messageForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const messageText = messageInput.value.trim();
+
+            if (messageText && currentUser && socket.connected) {
+                // Envoyer le message au serveur Socket.IO
+                socket.emit('chat message', {
+                    message: messageText,
+                    sender: currentUser
+                });
+                messageInput.value = ''; 
+            } else if (!socket.connected) {
+                alert("Erreur: Vous n'êtes pas connecté au serveur de chat.");
+            }
+        });
+
+        // --- Fonctions d'Affichage dans le DOM ---
+        function addMessageToDOM(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', `sender-${sender}`); 
+            
+            const senderSpan = document.createElement('span');
+            senderSpan.classList.add('message-sender');
+            senderSpan.textContent = sender + " :";
+
+            messageDiv.appendChild(senderSpan);
+            messageDiv.appendChild(document.createTextNode(text));
+            
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        function addSystemMessage(text) {
+            const sysMsg = document.createElement('p');
+            sysMsg.style.textAlign = 'center';
+            sysMsg.style.fontStyle = 'italic';
+            sysMsg.textContent = text;
+            messagesContainer.appendChild(sysMsg);
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    </script>
+</body>
+</html>
