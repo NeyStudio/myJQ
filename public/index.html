@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat A & B (Netlify Client)</title>
     <style>
-        /* (Le CSS du chat reste le même pour une belle interface) */
+        /* Styles CSS pour l'interface de chat */
         body { font-family: sans-serif; background-color: #f4f4f9; margin: 0; padding: 20px; display: flex; justify-content: center; }
         #chat-container { width: 90%; max-width: 600px; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); padding: 20px; }
         #messages { height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 15px; border-radius: 4px; display: flex; flex-direction: column; }
@@ -45,9 +45,9 @@
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 
     <script>
-        // *** 🔴 REMPLACEZ CETTE CHAÎNE APRÈS LE DÉPLOIEMENT DU BACKEND ! 🔴 ***
-        const BACKEND_URL = 'https://sc-urj5.onrender.com'; // Ex: https://mon-chat-api.cyclic.app
-        // *******************************************************************
+        // 🔴 REMPLACEZ CETTE CHAÎNE PAR L'URL OBTENUE DE RENDER ! 🔴
+        const BACKEND_URL = 'https://sc-urj5.onrender.com'; 
+        // Par exemple : 'https://mon-chat-api.onrender.com'
         
         let currentUser = null; 
         const messagesContainer = document.getElementById('messages');
@@ -58,7 +58,7 @@
         const currentUserDisplay = document.getElementById('current-user-display');
         const statusDisplay = document.getElementById('connection-status');
         
-        let socket; // La variable pour la connexion
+        let socket; // La variable pour la connexion Socket.IO
 
         // --- Logique de Sélection de l'Utilisateur ---
         document.getElementById('select-A').addEventListener('click', () => initializeChat('A'));
@@ -69,7 +69,6 @@
             userSelectionDiv.classList.add('hidden');
             chatInterfaceDiv.classList.remove('hidden');
             currentUserDisplay.textContent = user;
-            addSystemMessage(`Bienvenue, vous êtes l'utilisateur ${user}. Connexion au serveur...`);
             
             // 1. Initialiser la connexion Socket.IO au backend
             socket = io(BACKEND_URL); 
@@ -78,15 +77,30 @@
             socket.on('connect', () => {
                 statusDisplay.textContent = 'Connecté';
                 statusDisplay.style.color = 'green';
+                messagesContainer.innerHTML = ''; // Nettoyer l'interface lors de la (re)connexion
+                addSystemMessage(`Bienvenue, vous êtes l'utilisateur ${currentUser}.`);
             });
 
             socket.on('disconnect', () => {
                 statusDisplay.textContent = 'Déconnecté';
                 statusDisplay.style.color = 'red';
             });
+            
+            // 3. Réception de l'historique (Base de données)
+            socket.on('history', function(messages) {
+                // messages est un tableau d'objets { sender: 'A', message: '...' }
+                messagesContainer.innerHTML = ''; 
+                addSystemMessage(`Historique de la conversation chargé.`);
+                
+                messages.forEach(msg => {
+                    addMessageToDOM(msg.message, msg.sender, true); 
+                });
+                scrollToBottom();
+            });
 
-            // 3. Réception de messages
+            // 4. Réception de messages en temps réel
             socket.on('chat message', function(data) {
+                // Afficher le nouveau message après l'historique
                 addMessageToDOM(data.message, data.sender);
             });
         }
@@ -128,6 +142,7 @@
             const sysMsg = document.createElement('p');
             sysMsg.style.textAlign = 'center';
             sysMsg.style.fontStyle = 'italic';
+            sysMsg.style.fontSize = '0.9em';
             sysMsg.textContent = text;
             messagesContainer.appendChild(sysMsg);
             scrollToBottom();
