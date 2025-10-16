@@ -61,8 +61,8 @@
         let socket; // La variable pour la connexion Socket.IO
 
         // --- Logique de Sélection de l'Utilisateur ---
-        document.getElementById('select-A').addEventListener('click', () => initializeChat('A'));
-        document.getElementById('select-B').addEventListener('click', () => initializeChat('B'));
+        document.getElementById('select-A').addEventListener('click', () => initializeChat('Olga'));
+        document.getElementById('select-B').addEventListener('click', () => initializeChat('Eric'));
 
         function initializeChat(user) {
             currentUser = user;
@@ -78,7 +78,7 @@
                 statusDisplay.textContent = 'Connecté';
                 statusDisplay.style.color = 'green';
                 messagesContainer.innerHTML = ''; // Nettoyer l'interface lors de la (re)connexion
-                addSystemMessage(`Bienvenue, vous êtes l'utilisateur ${currentUser}.`);
+                addSystemMessage(`Yoooooooo, ${currentUser}.`);
             });
 
             socket.on('disconnect', () => {
