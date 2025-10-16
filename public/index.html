@@ -75,7 +75,7 @@
 
             // 2. Événements de connexion/déconnexion
             socket.on('connect', () => {
-                statusDisplay.textContent = 'Connexion au chat;
+                statusDisplay.textContent = 'Connexion au chat';
                 statusDisplay.style.color = 'orange';
                 messagesContainer.innerHTML = ''; // Nettoyer l'interface lors de la (re)connexion
                 addSystemMessage(`Yoooooooo  ${currentUser}, wait ça charge.`);
