@@ -11,7 +11,7 @@
         #messages { height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 15px; border-radius: 4px; display: flex; flex-direction: column; }
         .message { margin-bottom: 10px; padding: 8px 12px; border-radius: 15px; max-width: 80%; word-wrap: break-word; }
         .sender-A { background-color: #DCF8C6; align-self: flex-end; margin-left: auto; }
-        .sender-B { background-color: blue; align-self: flex-start; margin-right: auto; }
+        .sender-B { background-color: sky-blue; align-self: flex-start; margin-right: auto; }
         .message-sender { font-weight: bold; font-size: 0.8em; display: block; margin-bottom: 2px; }
         #message-form { display: flex; gap: 10px; }
         #message-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
@@ -78,7 +78,7 @@
                 statusDisplay.textContent = 'Connecté';
                 statusDisplay.style.color = 'green';
                 messagesContainer.innerHTML = ''; // Nettoyer l'interface lors de la (re)connexion
-                addSystemMessage(`Yoooooooo, ${currentUser}.`);
+                addSystemMessage(`Yoooooooo  ${currentUser}, wait ça charge.`);
             });
 
             socket.on('disconnect', () => {
