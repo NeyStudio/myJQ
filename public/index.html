@@ -8,7 +8,7 @@
         /* Styles CSS pour l'interface de chat */
         body { font-family: sans-serif; background-color: #f4f4f9; margin: 0; padding: 5px; display: flex; justify-content: center; }
         #chat-container { width: 99.9%; max-width: 600px; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); padding: 10px; }
-        #messages { height: 100%; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 15px; border-radius: 4px; display: flex; flex-direction: column; }
+        #messages { height: 100vh; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 15px; border-radius: 4px; display: flex; flex-direction: column; }
         .message { margin-bottom: 10px; padding: 8px 12px; border-radius: 15px; max-width: 80%; word-wrap: break-word; }
         .sender-Olga { background-color: yellow; align-self: flex-end; margin-left: auto; }
         .sender-Eric { background-color: skyblue; align-self: flex-start; margin-right: auto; }
@@ -39,7 +39,7 @@
                 <button type="submit">Envoyer</button>
             </form>
         </div>
-        <p id="connection-status" style="text-align: center; color: rot;">déconnecté</p>
+        <p id="connection-status" style="text-align: center; color: red;">déconnecté</p>
     </div>
     
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
