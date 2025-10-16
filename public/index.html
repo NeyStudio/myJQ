@@ -11,7 +11,7 @@
         #messages { height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 15px; border-radius: 4px; display: flex; flex-direction: column; }
         .message { margin-bottom: 10px; padding: 8px 12px; border-radius: 15px; max-width: 80%; word-wrap: break-word; }
         .sender-A { background-color: #DCF8C6; align-self: flex-end; margin-left: auto; }
-        .sender-B { background-color: sky-blue; align-self: flex-start; margin-right: auto; }
+        .sender-B { background-color: skyblue; align-self: flex-start; margin-right: auto; }
         .message-sender { font-weight: bold; font-size: 0.8em; display: block; margin-bottom: 2px; }
         #message-form { display: flex; gap: 10px; }
         #message-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
@@ -39,7 +39,7 @@
                 <button type="submit">Envoyer</button>
             </form>
         </div>
-        <p id="connection-status" style="text-align: center; color: red;">Déconnecté</p>
+        <p id="connection-status" style="text-align: center; color: orange;">choisis pour te connecter</p>
     </div>
     
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
@@ -75,8 +75,8 @@
 
             // 2. Événements de connexion/déconnexion
             socket.on('connect', () => {
-                statusDisplay.textContent = 'Connecté';
-                statusDisplay.style.color = 'green';
+                statusDisplay.textContent = 'Connexion au chat;
+                statusDisplay.style.color = 'orange';
                 messagesContainer.innerHTML = ''; // Nettoyer l'interface lors de la (re)connexion
                 addSystemMessage(`Yoooooooo  ${currentUser}, wait ça charge.`);
             });
@@ -90,7 +90,7 @@
             socket.on('history', function(messages) {
                 // messages est un tableau d'objets { sender: 'A', message: '...' }
                 messagesContainer.innerHTML = ''; 
-                addSystemMessage(`Historique de la conversation chargé.`);
+                addSystemMessage(`c'est bon, dis tout maintenant.`);
                 
                 messages.forEach(msg => {
                     addMessageToDOM(msg.message, msg.sender, true); 
