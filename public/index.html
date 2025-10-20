@@ -90,7 +90,7 @@
             socket.on('history', function(messages) {
                 // messages est un tableau d'objets { sender: 'A', message: '...' }
                 messagesContainer.innerHTML = ''; 
-                statusDisplay.textContent = 'Connexion réussie;
+                statusDisplay.textContent = 'Connexion réussie';
                 statusDisplay.style.color = 'green';
                 addSystemMessage(`c'est bon, dis tout maintenant.`);
                 
