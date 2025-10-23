@@ -9,33 +9,39 @@
 </head>
 <body>
     <div id="chat-container">
-        <h1 style="text-align: center;">Lass uns schmecken</h1>
         
         <div id="user-selection">
+            <h1 style="text-align: center;">Lass uns schmecken</h1>
             <p>Dis la vérité pour begin</p>
             <button id="select-Olga">Je suis Olga</button>
             <button id="select-Eric">Je suis Eric</button>
         </div>
-
         <div id="chat-interface" class="hidden">
-            <p>
-                Connecté en tant que : <strong id="current-user-display"></strong>
-                <span id="other-user-status" class="offline">(Déconnecté)</span> 
-            </p>
-            
+            <nav id="header-bar">
+                <div class="header-status">
+                    <span id="global-connection-indicator" class="status-dot orange"></span>
+                    <span id="header-title">Lass uns schmecken</span>
+                </div>
+                
+                <div class="user-info">
+                    Connecté(e) en tant que : <strong id="current-user-display"></strong>
+                    
+                    <span id="other-user-status-dot" class="status-dot red"></span>
+                </div>
+            </nav>
             <div id="messages"></div>
+            
+            <p id="typing-indicator" class="hidden"></p>
+            
             <form id="message-form">
                 <input type="text" id="message-input" placeholder="Écrivez votre message..." required>
                 <button type="submit">Envoyer</button>
             </form>
         </div>
-        <p id="connection-status" style="text-align: center; color: red;">déconnecté</p>
         
-        <p id="typing-indicator" style="text-align: left; color: gray; margin-left: 20px;" class="hidden"></p>
-    </div>
+        </div>
     
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    
     <script src="script.js"></script>
 </body>
 </html>
