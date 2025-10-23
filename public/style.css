@@ -7,7 +7,7 @@ body {
     display: flex; 
     justify-content: center; 
     height: 100vh; 
-    overflow: hidden; /* Empêche le défilement de la page entière */
+    overflow: hidden; 
 }
 #chat-container { 
     width: 100%; 
@@ -17,6 +17,13 @@ body {
     height: 100%; 
     display: flex; 
     flex-direction: column;
+}
+
+/* NOUVEAU: Ajout de flexbox pour gérer la hauteur interne du chat */
+#chat-interface {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* CLÉ: Assure que l'interface prend toute la hauteur */
 }
 
 /* En-tête ultra-réduit */
@@ -31,19 +38,20 @@ body {
     font-size: 1.1em;
     font-weight: bold;
     min-height: 50px; 
+    flex-shrink: 0; /* CLÉ: L'en-tête ne doit JAMAIS rétrécir */
 }
 #header-title {
     margin-right: auto; 
 }
 
-/* Groupement des points de statut à droite */
+/* Groupement des points de statut à droite (inchangé) */
 .user-status-group {
     display: flex;
     align-items: center;
     margin-left: 10px;
 }
 
-/* Styles pour les points de statut */
+/* Styles pour les points de statut (inchangé) */
 .status-dot {
     height: 12px; 
     width: 12px;
@@ -55,25 +63,15 @@ body {
 .status-dot.orange { background-color: #FF9800; } 
 .status-dot.red { background-color: #F44336; } 
 
-/* CORRECTION CLÉ: Défilement et hauteur de la conversation */
+/* CORRECTION DÉFILEMENT: Défilement et hauteur de la conversation */
 #messages { 
-    /* Calcule la hauteur restante : 
-       100% du conteneur parent (#chat-interface) 
-       - Hauteur de la barre d'en-tête (~50px)
-       - Hauteur de l'indicateur de frappe (20px + marges)
-       - Hauteur du formulaire (~50px + padding) 
-       J'utilise flex-grow: 1 pour que flexbox fasse le calcul, 
-       mais j'ajoute un min-height pour la robustesse sur certains navigateurs. */
-    flex-grow: 1; 
-    overflow-y: auto; /* SEUL CET ÉLÉMENT DÉFILE */
+    flex-grow: 1; /* CLÉ: Prend tout l'espace restant */
+    overflow-y: auto; /* CLÉ: SEUL CET ÉLÉMENT DÉFILE */
     padding: 10px 20px; 
     margin-bottom: 0; 
     display: flex; 
     flex-direction: column; 
     scroll-behavior: smooth;
-    
-    /* Fallback/Correction pour les navigateurs récalcitrants au flex-grow dans un conteneur vertical */
-    /* Laissons flex-grow: 1, mais assurons-nous que les éléments adjacents ont des hauteurs définies */
 }
 
 .message { 
@@ -108,7 +106,7 @@ body {
     opacity: 0.8; 
     margin-left: auto; 
 }
-/* Styles pour le séparateur de date */
+/* Styles pour le séparateur de date (inchangé) */
 .date-separator-container {
     width: 100%;
     text-align: center;
@@ -130,6 +128,7 @@ body {
     color: #555;
     margin: 5px 20px;
     height: 20px; 
+    flex-shrink: 0; /* CLÉ: Ne doit JAMAIS rétrécir */
 }
 
 /* Formulaire de saisie */
@@ -138,7 +137,8 @@ body {
     gap: 10px; 
     padding: 10px 20px;
     border-top: 1px solid #eee;
-    min-height: 40px; /* Assure une hauteur constante */
+    min-height: 40px; 
+    flex-shrink: 0; /* CLÉ: Ne doit JAMAIS rétrécir */
 }
 #message-input { 
     flex-grow: 1; 
