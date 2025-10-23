@@ -3,36 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat A & B </title>
-    <style>
-        /* Styles CSS pour l'interface de chat */
-        body { font-family: sans-serif; background-color: #f4f4f9; margin: 0; padding: 5px; display: flex; justify-content: center; }
-        #chat-container { width: 99.9%; max-width: 99.9%; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); padding: 10px; height: 98vh;}
-        #messages { height: 85%; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 15px; border-radius: 4px; display: flex; flex-direction: column; }
-        .message { margin-bottom: 10px; padding: 8px 12px; border-radius: 15px; max-width: 80%; word-wrap: break-word; }
-        .sender-Olga { background-color: yellow; align-self: flex-end; margin-left: auto; }
-        .sender-Eric { background-color: skyblue; align-self: flex-start; margin-right: auto; }
-        .message-sender { font-weight: bold; font-size: 0.8em; display: block; margin-bottom: 2px; }
-        #message-form { display: flex; gap: 2%; position: fixed; z-index:1000; bottom:20px; width: text-align: center;}
-        #message-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px;}
-        button { background-color: #5cb85c; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; }
-        #user-selection { text-align: center; margin-bottom: 20px; }
-        #user-selection button { margin: 5px; }
-        .hidden { display: none !important; }
-    </style>
-</head>
+    <title>Chat Olga & Eric</title>
+    
+    <link rel="stylesheet" href="style.css"> 
+    
+    </head>
 <body>
     <div id="chat-container">
         <h1 style="text-align: center;">Lass uns schmecken</h1>
         
         <div id="user-selection">
             <p>Dis la vérité pour begin</p>
-            <button id="select-A">Je suis Olga</button>
-            <button id="select-B">Je suis Eric</button>
+            <button id="select-Olga">Je suis Olga</button>
+            <button id="select-Eric">Je suis Eric</button>
         </div>
 
         <div id="chat-interface" class="hidden">
-            <p>Connecté en tant que : <strong id="current-user-display"></strong></p>
+            <p>
+                Connecté en tant que : <strong id="current-user-display"></strong>
+                <span id="other-user-status" class="offline">(Déconnecté)</span> 
+            </p>
+            
             <div id="messages"></div>
             <form id="message-form">
                 <input type="text" id="message-input" placeholder="Écrivez votre message..." required>
@@ -40,119 +31,12 @@
             </form>
         </div>
         <p id="connection-status" style="text-align: center; color: red;">déconnecté</p>
+        
+        <p id="typing-indicator" style="text-align: left; color: gray; margin-left: 20px;" class="hidden"></p>
     </div>
     
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-
-    <script>
-        // 🔴 REMPLACEZ CETTE CHAÎNE PAR L'URL OBTENUE DE RENDER ! 🔴
-        const BACKEND_URL = 'https://sc-production-6d0a.up.railway.app'; 
-        // Par exemple : 'https://mon-chat-api.onrender.com'
-        
-        let currentUser = null; 
-        const messagesContainer = document.getElementById('messages');
-        const messageForm = document.getElementById('message-form');
-        const messageInput = document.getElementById('message-input');
-        const userSelectionDiv = document.getElementById('user-selection');
-        const chatInterfaceDiv = document.getElementById('chat-interface');
-        const currentUserDisplay = document.getElementById('current-user-display');
-        const statusDisplay = document.getElementById('connection-status');
-        
-        let socket; // La variable pour la connexion Socket.IO
-
-        // --- Logique de Sélection de l'Utilisateur ---
-        document.getElementById('select-A').addEventListener('click', () => initializeChat('Olga'));
-        document.getElementById('select-B').addEventListener('click', () => initializeChat('Eric'));
-
-        function initializeChat(user) {
-            currentUser = user;
-            userSelectionDiv.classList.add('hidden');
-            chatInterfaceDiv.classList.remove('hidden');
-            currentUserDisplay.textContent = user;
-            
-            // 1. Initialiser la connexion Socket.IO au backend
-            socket = io(BACKEND_URL); 
-
-            // 2. Événements de connexion/déconnexion
-            socket.on('connect', () => {
-                statusDisplay.textContent = 'Connexion au chat';
-                statusDisplay.style.color = 'orange';
-                messagesContainer.innerHTML = ''; // Nettoyer l'interface lors de la (re)connexion
-                addSystemMessage(`Yoooooooo  ${currentUser}, wait ça charge.`);
-            });
-
-            socket.on('disconnect', () => {
-                statusDisplay.textContent = 'déconnecté';
-                statusDisplay.style.color = 'red';
-            });
-            
-            // 3. Réception de l'historique (Base de données)
-            socket.on('history', function(messages) {
-                // messages est un tableau d'objets { sender: 'A', message: '...' }
-                messagesContainer.innerHTML = ''; 
-                statusDisplay.textContent = 'Connexion réussie';
-                statusDisplay.style.color = 'green';
-                addSystemMessage(`c'est bon, dis tout maintenant.`);
-                
-                messages.forEach(msg => {
-                    addMessageToDOM(msg.message, msg.sender, true); 
-                });
-                scrollToBottom();
-            });
-
-            // 4. Réception de messages en temps réel
-            socket.on('chat message', function(data) {
-                // Afficher le nouveau message après l'historique
-                addMessageToDOM(data.message, data.sender);
-            });
-        }
-
-        // --- Logique d'Envoi de Message ---
-        messageForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const messageText = messageInput.value.trim();
-
-            if (messageText && currentUser && socket.connected) {
-                // Envoyer le message au serveur Socket.IO
-                socket.emit('chat message', {
-                    message: messageText,
-                    sender: currentUser
-                });
-                messageInput.value = ''; 
-            } else if (!socket.connected) {
-                alert("Erreur: Vous n'êtes pas connecté au serveur de chat.");
-            }
-        });
-
-        // --- Fonctions d'Affichage dans le DOM ---
-        function addMessageToDOM(text, sender) {
-            const messageDiv = document.createElement('div');
-            messageDiv.classList.add('message', `sender-${sender}`); 
-            
-            const senderSpan = document.createElement('span');
-            senderSpan.classList.add('message-sender');
-            senderSpan.textContent = sender + " :";
-
-            messageDiv.appendChild(senderSpan);
-            messageDiv.appendChild(document.createTextNode(text));
-            
-            messagesContainer.appendChild(messageDiv);
-            scrollToBottom();
-        }
-
-        function addSystemMessage(text) {
-            const sysMsg = document.createElement('p');
-            sysMsg.style.textAlign = 'center';
-            sysMsg.style.fontStyle = 'italic';
-            sysMsg.style.fontSize = '0.9em';
-            sysMsg.textContent = text;
-            messagesContainer.appendChild(sysMsg);
-            scrollToBottom();
-        }
-
-        function scrollToBottom() {
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-    </script>
+    
+    <script src="script.js"></script>
 </body>
 </html>
