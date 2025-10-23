@@ -16,17 +16,14 @@
             <button id="select-Olga">Je suis Olga</button>
             <button id="select-Eric">Je suis Eric</button>
         </div>
+
         <div id="chat-interface" class="hidden">
             <nav id="header-bar">
-                <div class="header-status">
-                    <span id="global-connection-indicator" class="status-dot orange"></span>
-                    <span id="header-title">Lass uns schmecken</span>
-                </div>
+                <span id="header-title">Lass uns schmecken</span>
                 
-                <div class="user-info">
-                    Connecté(e) en tant que : <strong id="current-user-display"></strong>
-                    
-                    <span id="other-user-status-dot" class="status-dot red"></span>
+                <div class="user-status-group">
+                    <span id="global-connection-indicator" class="status-dot orange" title="Statut de la connexion"></span>
+                    <span id="other-user-status-dot" class="status-dot red" title="Statut de l'autre utilisateur"></span>
                 </div>
             </nav>
             <div id="messages"></div>
@@ -38,8 +35,7 @@
                 <button type="submit">Envoyer</button>
             </form>
         </div>
-        
-        </div>
+    </div>
     
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="script.js"></script>

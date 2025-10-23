@@ -9,7 +9,7 @@ const userSelectionDiv = document.getElementById('user-selection');
 const chatInterfaceDiv = document.getElementById('chat-interface');
 const currentUserDisplay = document.getElementById('current-user-display');
 
-// NOUVEAU: Indicateurs de statut basés sur les points
+// Indicateurs de statut basés sur les points
 const globalConnectionIndicator = document.getElementById('global-connection-indicator');
 const otherUserStatusDot = document.getElementById('other-user-status-dot'); 
 
@@ -18,7 +18,6 @@ const typingIndicator = document.getElementById('typing-indicator');
 let socket; 
 let typingTimeout;
 const TYPING_TIMER_LENGTH = 1500; 
-
 let lastDisplayedDate = null; 
 
 // --- Logique de Sélection de l'Utilisateur par Bouton ---
@@ -27,7 +26,7 @@ document.getElementById('select-Eric').addEventListener('click', () => initializ
 
 // Fonction utilitaire pour mettre à jour le point de connexion global
 function updateGlobalStatus(status) {
-    // status: 'green', 'orange', 'red'
+    // status: 'green' (connecté), 'orange' (en cours), 'red' (déconnecté)
     globalConnectionIndicator.classList.remove('green', 'orange', 'red');
     globalConnectionIndicator.classList.add(status);
 }
@@ -38,17 +37,17 @@ function updateOtherUserStatus(isOnline) {
     otherUserStatusDot.classList.add(isOnline ? 'green' : 'red');
 }
 
-
 function initializeChat(user) {
     currentUser = user;
     userSelectionDiv.classList.add('hidden');
     chatInterfaceDiv.classList.remove('hidden');
-    currentUserDisplay.textContent = user;
+    
+    // NOUVEAU: Affichage dans le titre pour savoir qui on est
+    document.getElementById('header-title').textContent = `Chat | ${currentUser}`;
     
     // 1. Initialiser la connexion Socket.IO
     socket = io(BACKEND_URL); 
     
-    // Initialiser le statut de l'autre utilisateur à 'déconnecté' (rouge)
     updateOtherUserStatus(false);
     updateGlobalStatus('orange'); // En cours de connexion
 
@@ -61,8 +60,8 @@ function initializeChat(user) {
     });
 
     socket.on('disconnect', () => {
-        updateGlobalStatus('red'); // Déconnecté
-        updateOtherUserStatus(false); // L'autre est aussi considéré déconnecté du réseau
+        updateGlobalStatus('red'); 
+        updateOtherUserStatus(false);
     });
     
     // 3. Réception de l'historique 
@@ -71,10 +70,11 @@ function initializeChat(user) {
         
         lastDisplayedDate = null; 
         messages.forEach(msg => {
-            addMessageToDOM(msg.message, msg.sender, true, msg.timestamp); 
+            // Utiliser false pour isHistory pour ne pas appeler scrollToBottom à chaque message
+            addMessageToDOM(msg.message, msg.sender, false, msg.timestamp); 
         });
         
-        // NOUVEAU: Assure le défilement vers le bas après le chargement
+        // CORRECTION CLÉ: Assure le défilement vers le bas UNE FOIS après le chargement
         scrollToBottom(); 
     });
 
@@ -82,6 +82,7 @@ function initializeChat(user) {
     socket.on('chat message', function(data) {
         typingIndicator.classList.add('hidden');
         addMessageToDOM(data.message, data.sender, false, data.timestamp);
+        // scrollToBottom est appelé par addMessageToDOM
     });
     
     // 5. Gestion des événements de frappe
@@ -104,14 +105,14 @@ function initializeChat(user) {
         const otherUser = (currentUser === 'Olga') ? 'Eric' : 'Olga';
         
         if (onlineUsers.includes(otherUser)) {
-            updateOtherUserStatus(true); // L'autre est en ligne (vert)
+            updateOtherUserStatus(true);
         } else {
-            updateOtherUserStatus(false); // L'autre est hors ligne (rouge)
+            updateOtherUserStatus(false);
         }
     });
 }
 
-// --- Logique d'Envoi de Message (inchangée) ---
+// --- Logique d'Envoi de Message et de Frappe (inchangée) ---
 messageForm.addEventListener('submit', function(e) {
     e.preventDefault();
     const messageText = messageInput.value.trim();
@@ -132,7 +133,6 @@ messageForm.addEventListener('submit', function(e) {
     }
 });
 
-// --- Gestion de l'indicateur de frappe (Côté Émetteur) (inchangée) ---
 messageInput.addEventListener('input', () => {
     if (!currentUser || !socket || !socket.connected) return;
 
@@ -145,7 +145,8 @@ messageInput.addEventListener('input', () => {
     }, TYPING_TIMER_LENGTH);
 });
 
-// --- Fonction de formatage de l'horodatage (Heure seule) (inchangée) ---
+// --- Fonctions d'Affichage (inchangées sauf pour la correction du scrollToBottom) ---
+
 function formatTimestamp(isoString) {
     if (!isoString) return '';
     const date = new Date(isoString);
@@ -154,7 +155,6 @@ function formatTimestamp(isoString) {
     return `${hours}:${minutes}`;
 }
 
-// --- Fonction de formatage pour le séparateur de date (Date complète) (inchangée) ---
 function formatSeparatorDate(isoString) {
     const date = new Date(isoString);
     return date.toLocaleDateString('fr-FR', {
@@ -164,24 +164,20 @@ function formatSeparatorDate(isoString) {
     });
 }
 
-// --- Fonctions d'Affichage dans le DOM (inchangée) ---
 function addMessageToDOM(text, sender, isHistory = false, timestamp) {
     const messageDate = new Date(timestamp);
     const dateString = messageDate.toDateString(); 
 
-    // 1. Vérifier et ajouter le séparateur de date
     if (lastDisplayedDate !== dateString) {
         addDateSeparator(timestamp);
         lastDisplayedDate = dateString;
     }
     
-    // 2. Création de la bulle de message
     const messageDiv = document.createElement('div');
     const senderClass = (sender === 'Olga' || sender === 'Eric') ? `sender-${sender}` : 'sender-Eric';
 
     messageDiv.classList.add('message', senderClass); 
     
-    // Conteneur pour l'expéditeur et l'heure
     const headerDiv = document.createElement('div');
     headerDiv.style.display = 'flex';
     headerDiv.style.justifyContent = 'space-between';
@@ -191,7 +187,6 @@ function addMessageToDOM(text, sender, isHistory = false, timestamp) {
     senderSpan.classList.add('message-sender');
     senderSpan.textContent = sender + " :";
     
-    // Affichage de l'heure
     const timeSpan = document.createElement('span');
     timeSpan.classList.add('message-time');
     const timeToDisplay = timestamp || new Date(); 
@@ -202,17 +197,19 @@ function addMessageToDOM(text, sender, isHistory = false, timestamp) {
     
     messageDiv.appendChild(headerDiv);
     
-    // Ajout du texte du message
     const textNode = document.createElement('p');
     textNode.textContent = text;
     textNode.style.margin = '5px 0 0 0';
     messageDiv.appendChild(textNode);
     
     messagesContainer.appendChild(messageDiv);
-    scrollToBottom(); 
+    
+    // Appel de scrollToBottom UNIQUEMENT après l'ajout d'un nouveau message
+    if (!isHistory) {
+        scrollToBottom(); 
+    }
 }
 
-// --- Fonction d'ajout du séparateur de date (inchangée) ---
 function addDateSeparator(timestamp) {
     const separatorContainer = document.createElement('div');
     separatorContainer.classList.add('date-separator-container');
@@ -232,10 +229,9 @@ function addSystemMessage(text) {
     sysMsg.style.fontSize = '0.9em';
     sysMsg.textContent = text;
     messagesContainer.appendChild(sysMsg);
-    scrollToBottom();
+    // scrollToBottom(); N'est plus appelé ici pour éviter de défiler pendant le chargement initial
 }
 
 function scrollToBottom() {
-    // Utilisation de behavior: 'smooth' pour une meilleure expérience
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }

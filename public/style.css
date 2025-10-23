@@ -3,70 +3,68 @@ body {
     font-family: sans-serif; 
     background-color: #f4f4f9; 
     margin: 0; 
-    padding: 0; /* Suppression du padding pour un meilleur contrôle du défilement */
+    padding: 0; 
     display: flex; 
     justify-content: center; 
-    height: 100vh; /* Nouvelle: La page prend toute la hauteur */
-    overflow: hidden; /* Nouvelle: Empêche le défilement de la page entière */
+    height: 100vh; 
+    overflow: hidden; /* Empêche le défilement de la page entière */
 }
 #chat-container { 
     width: 100%; 
     max-width: 900px; 
     background-color: #fff; 
-    border-radius: 0; /* Suppression des bords pour un design plus moderne */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); 
-    height: 100%; /* Nouvelle: prend toute la hauteur de la fenêtre */
+    height: 100%; 
     display: flex; 
     flex-direction: column;
 }
 
-/* NOUVEAU: Style de la barre d'en-tête réduite */
+/* NOUVEAU: En-tête ultra-réduit */
 #header-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 15px 20px;
-    background-color: #63d471; /* Un peu de couleur pour l'en-tête */
+    background-color: #63d471; 
     color: white;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    font-size: 0.9em;
-}
-.header-status {
-    display: flex;
-    align-items: center;
-    font-weight: bold;
     font-size: 1.1em;
+    font-weight: bold;
+    min-height: 50px; /* Assure une hauteur minimale */
 }
-.user-info {
-    display: flex;
-    align-items: center;
+#header-title {
+    margin-right: auto; /* Pousse les points à droite */
 }
 
-/* NOUVEAU: Styles pour les points de statut */
+/* NOUVEAU: Groupement des points de statut à droite */
+.user-status-group {
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+}
+
+/* Styles pour les points de statut */
 .status-dot {
-    height: 10px;
-    width: 10px;
+    height: 12px; /* Légèrement plus grand pour la visibilité */
+    width: 12px;
     border-radius: 50%;
-    margin-right: 8px;
-    margin-left: 5px;
+    margin-left: 8px; /* Séparation entre les points */
     display: inline-block;
 }
-.status-dot.green { background-color: #4CAF50; } /* Connecté */
-.status-dot.orange { background-color: #FF9800; } /* En cours */
-.status-dot.red { background-color: #F44336; } /* Déconnecté */
+.status-dot.green { background-color: #4CAF50; } 
+.status-dot.orange { background-color: #FF9800; } 
+.status-dot.red { background-color: #F44336; } 
 
-
-/* MISE À JOUR: Hauteur fixe pour le défilement de la conversation */
+/* CORRECTION: Défilement et hauteur de la conversation */
 #messages { 
-    flex-grow: 1; /* Prend l'espace restant */
-    overflow-y: auto; /* Permet le défilement unique */
-    border: none; /* Retrait de la bordure */
-    padding: 10px 20px; /* Plus d'espace sur les côtés */
+    flex-grow: 1; 
+    overflow-y: auto; /* SEUL CET ÉLÉMENT DÉFILE */
+    padding: 10px 20px; 
     margin-bottom: 0; 
-    border-radius: 0; 
     display: flex; 
     flex-direction: column; 
     scroll-behavior: smooth;
+    /* La hauteur est gérée par flex-grow: 1 */
 }
 
 .message { 
@@ -79,12 +77,12 @@ body {
     flex-direction: column; 
 }
 .sender-Olga { 
-    background-color: #ffeb3b; /* Jaune amélioré */
+    background-color: #ffeb3b; 
     align-self: flex-end; 
     margin-left: auto; 
 }
 .sender-Eric { 
-    background-color: #81d4fa; /* Bleu amélioré */
+    background-color: #81d4fa; 
     align-self: flex-start; 
     margin-right: auto; 
 }
@@ -117,36 +115,34 @@ body {
     display: inline-block;
 }
 
-/* NOUVEAU: Indicateur de frappe au-dessus du formulaire */
+/* Indicateur de frappe */
 #typing-indicator {
     font-size: 0.85em;
     color: #555;
     margin: 5px 20px;
-    height: 20px; /* Réserve l'espace pour éviter les sauts */
+    height: 20px; 
+    /* Assure que l'espace est réservé même si vide, évitant les sauts de formulaire */
 }
 
-
-/* Fixes pour le formulaire en bas de page */
+/* Le formulaire de saisie reste en bas sans positionnement fixe */
 #message-form { 
     display: flex; 
     gap: 10px; 
     padding: 10px 20px;
     border-top: 1px solid #eee;
-    /* Suppression du positionnement fixed pour qu'il reste dans le #chat-container */
-    /* width: 100%; */
 }
 #message-input { 
     flex-grow: 1; 
     padding: 10px; 
     border: 1px solid #ccc; 
-    border-radius: 20px; /* Bords arrondis */
+    border-radius: 20px; 
 }
 button { 
     background-color: #5cb85c; 
     color: white; 
     border: none; 
     padding: 10px 15px; 
-    border-radius: 20px; /* Bords arrondis */
+    border-radius: 20px; 
     cursor: pointer; 
     min-width: 80px; 
 }
