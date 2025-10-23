@@ -10,11 +10,14 @@ const chatInterfaceDiv = document.getElementById('chat-interface');
 const currentUserDisplay = document.getElementById('current-user-display');
 const statusDisplay = document.getElementById('connection-status');
 const typingIndicator = document.getElementById('typing-indicator');
-const otherUserStatus = document.getElementById('other-user-status'); // Statut en ligne
+const otherUserStatus = document.getElementById('other-user-status'); 
 
 let socket; 
 let typingTimeout;
 const TYPING_TIMER_LENGTH = 1500; 
+
+// Stocker la date du dernier message affiché pour insérer le séparateur
+let lastDisplayedDate = null; 
 
 // --- Logique de Sélection de l'Utilisateur par Bouton ---
 document.getElementById('select-Olga').addEventListener('click', () => initializeChat('Olga'));
@@ -42,7 +45,6 @@ function initializeChat(user) {
     socket.on('disconnect', () => {
         statusDisplay.textContent = 'déconnecté';
         statusDisplay.style.color = 'red';
-        // Réinitialiser le statut de l'autre utilisateur en cas de déconnexion du serveur
         otherUserStatus.textContent = `(Déconnecté)`;
         otherUserStatus.classList.remove('online');
         otherUserStatus.classList.add('offline');
@@ -55,8 +57,8 @@ function initializeChat(user) {
         statusDisplay.style.color = 'green';
         addSystemMessage(`c'est bon, dis tout maintenant.`);
         
+        lastDisplayedDate = null; // Réinitialiser pour l'historique
         messages.forEach(msg => {
-            // Passe le timestamp pour l'affichage
             addMessageToDOM(msg.message, msg.sender, true, msg.timestamp); 
         });
         scrollToBottom();
@@ -65,7 +67,6 @@ function initializeChat(user) {
     // 4. Réception de messages en temps réel
     socket.on('chat message', function(data) {
         typingIndicator.classList.add('hidden');
-        // Passe le timestamp du nouveau message
         addMessageToDOM(data.message, data.sender, false, data.timestamp);
     });
     
@@ -134,19 +135,41 @@ messageInput.addEventListener('input', () => {
     }, TYPING_TIMER_LENGTH);
 });
 
-// --- Fonction de formatage de l'horodatage ---
+// --- Fonction de formatage de l'horodatage (Heure seule) ---
 function formatTimestamp(isoString) {
     if (!isoString) return '';
     const date = new Date(isoString);
-    // Format H:MM
-    return date.toLocaleTimeString('fr-FR', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
+    
+    // Format Heures:Minutes à 2 chiffres
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    
+    return `${hours}:${minutes}`;
+}
+
+// --- Fonction de formatage pour le séparateur de date (Date complète) ---
+function formatSeparatorDate(isoString) {
+    const date = new Date(isoString);
+    
+    return date.toLocaleDateString('fr-FR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
     });
 }
 
 // --- Fonctions d'Affichage dans le DOM ---
 function addMessageToDOM(text, sender, isHistory = false, timestamp) {
+    const messageDate = new Date(timestamp);
+    const dateString = messageDate.toDateString(); // Ex: "Thu Oct 23 2025"
+
+    // 1. Vérifier et ajouter le séparateur de date
+    if (lastDisplayedDate !== dateString) {
+        addDateSeparator(timestamp);
+        lastDisplayedDate = dateString;
+    }
+    
+    // 2. Création de la bulle de message
     const messageDiv = document.createElement('div');
     const senderClass = (sender === 'Olga' || sender === 'Eric') ? `sender-${sender}` : 'sender-Eric';
 
@@ -166,7 +189,7 @@ function addMessageToDOM(text, sender, isHistory = false, timestamp) {
     const timeSpan = document.createElement('span');
     timeSpan.classList.add('message-time');
     const timeToDisplay = timestamp || new Date(); 
-    timeSpan.textContent = formatTimestamp(timeToDisplay);
+    timeSpan.textContent = formatTimestamp(timeToDisplay); 
     
     headerDiv.appendChild(senderSpan);
     headerDiv.appendChild(timeSpan);
@@ -176,11 +199,24 @@ function addMessageToDOM(text, sender, isHistory = false, timestamp) {
     // Ajout du texte du message
     const textNode = document.createElement('p');
     textNode.textContent = text;
-    textNode.style.margin = '5px 0 0 0'; // Petite marge pour séparer du header
+    textNode.style.margin = '5px 0 0 0';
     messageDiv.appendChild(textNode);
     
     messagesContainer.appendChild(messageDiv);
     scrollToBottom(); 
+}
+
+// --- Fonction d'ajout du séparateur de date ---
+function addDateSeparator(timestamp) {
+    const separatorContainer = document.createElement('div');
+    separatorContainer.classList.add('date-separator-container');
+
+    const separator = document.createElement('span');
+    separator.classList.add('date-separator');
+    separator.textContent = formatSeparatorDate(timestamp);
+    
+    separatorContainer.appendChild(separator);
+    messagesContainer.appendChild(separatorContainer);
 }
 
 function addSystemMessage(text) {

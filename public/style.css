@@ -9,7 +9,7 @@ body {
 }
 #chat-container { 
     width: 99.9%; 
-    max-width: 900px; /* Limite la largeur pour une meilleure lecture sur desktop */
+    max-width: 900px; 
     background-color: #fff; 
     border-radius: 8px; 
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); 
@@ -27,7 +27,7 @@ body {
     border-radius: 4px; 
     display: flex; 
     flex-direction: column; 
-    scroll-behavior: smooth; /* Défilement doux */
+    scroll-behavior: smooth; 
     flex-grow: 1; 
 }
 .message { 
@@ -37,7 +37,7 @@ body {
     max-width: 80%; 
     word-wrap: break-word; 
     display: flex; 
-    flex-direction: column; /* Permet à l'heure et au texte d'être séparés */
+    flex-direction: column; 
 }
 .sender-Olga { 
     background-color: yellow; 
@@ -63,6 +63,23 @@ body {
     opacity: 0.8; 
     margin-left: auto; 
 }
+/* Styles pour le séparateur de date */
+.date-separator-container {
+    width: 100%;
+    text-align: center;
+    margin: 15px 0 10px 0;
+}
+
+.date-separator {
+    background-color: #e0e0e0;
+    color: #555;
+    font-size: 0.75em;
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-weight: 500;
+    display: inline-block;
+}
+
 /* Styles pour le statut en ligne/hors ligne */
 #other-user-status {
     font-size: 0.9em;
