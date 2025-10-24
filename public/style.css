@@ -78,10 +78,10 @@ body {
     word-wrap: break-word; 
     display: flex; 
     flex-direction: column; 
-    /* NOUVEAU: Préparation pour l'animation de glissement */
+    /* Préparation pour l'animation de glissement */
     position: relative; 
     transition: transform 0.2s ease-out;
-    touch-action: pan-y; /* Permet le défilement vertical tout en gérant le glissement horizontal */
+    touch-action: pan-y; /* Permet le défilement vertical */
 }
 .sender-Olga { 
     background-color: #ffeb3b; 
@@ -94,7 +94,7 @@ body {
     margin-right: auto; 
 }
 
-/* NOUVEAU: Styles pour le message de citation (reply) */
+/* Styles pour le message de citation (reply) */
 .message-reply {
     background-color: rgba(255, 255, 255, 0.5); 
     border-left: 3px solid #63d471;
@@ -148,7 +148,7 @@ body {
     flex-shrink: 0; 
 }
 
-/* NOUVEAU: Styles de la boîte de réponse au-dessus du formulaire */
+/* Styles de la boîte de réponse au-dessus du formulaire */
 #reply-box {
     display: flex;
     justify-content: space-between;
