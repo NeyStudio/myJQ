@@ -87,12 +87,16 @@ body {
     touch-action: pan-y; /* Permet le défilement vertical */
 }
 .sender-Olga { 
-    background-color: #632D79; 
+    color: #333333;
+    border: solid 1px #FEE6EB;
+    background-color: #F0F0F0; 
     align-self: flex-end; 
     margin-left: auto; 
 }
 .sender-Eric { 
-    background-color: #17478E; 
+    color: #333333;
+    background-color: #D8F0FF;
+    border: solid 1px #E6F5FF;
     align-self: flex-start; 
     margin-right: auto; 
 }
