@@ -21,7 +21,7 @@ let lastDisplayedDate = null;
 let originalTitle = document.title;
 let notificationInterval = null;
 
-// Variables et DOM pour la réponse par glissement
+// Variables et DOM pour la réponse par glissement (Correction des variables globales)
 let isSwiping = false;
 let startX = 0;
 let currentMessageToReply = null; 
@@ -29,6 +29,9 @@ const replyBox = document.getElementById('reply-box');
 const replySenderSpan = document.getElementById('reply-sender');
 const replyTextSpan = document.getElementById('reply-text');
 const cancelReplyButton = document.getElementById('cancel-reply');
+
+// NOUVEAU: Variable pour stocker l'élément en cours de glissement
+let currentSwipedElement = null; 
 
 
 // --- 1. Logique de Connexion et Statuts ---
@@ -132,7 +135,6 @@ function initializeChat(user) {
     socket.on('history', function(messages) {
         messagesContainer.innerHTML = ''; 
         lastDisplayedDate = null; 
-        // L'historique envoie : message, sender, timestamp, replyTo, id
         messages.forEach(msg => {
             addMessageToDOM(msg.message, msg.sender, true, msg.timestamp, msg.replyTo, msg.id); 
         });
@@ -142,7 +144,6 @@ function initializeChat(user) {
     // Message reçu
     socket.on('chat message', function(data) {
         typingIndicator.classList.add('hidden');
-        // Le chat message envoie : message, sender, timestamp, replyTo, id
         addMessageToDOM(data.message, data.sender, false, data.timestamp, data.replyTo, data.id);
         
         if (data.sender !== currentUser) {
@@ -179,13 +180,21 @@ function initializeChat(user) {
 
 // --- 4. Logique de Réponse (Reply) ---
 
-// Fonction pour initialiser la réponse (déclenchée par glissement)
+// Fonction pour initialiser la réponse (inclut la conversion d'ID)
 function setReplyContext(messageElement) {
     const sender = messageElement.getAttribute('data-sender');
     const text = messageElement.getAttribute('data-text');
     const id = messageElement.getAttribute('data-id');
 
-    currentMessageToReply = { id: parseInt(id), sender, text }; // Conversion ID en Integer
+    // Conversion explicite de l'ID en entier pour le serveur PostgreSQL
+    const replyId = parseInt(id); 
+
+    if (isNaN(replyId) || replyId <= 0) {
+        console.error("Erreur: ID de message non valide pour la réponse.", id);
+        return; 
+    }
+
+    currentMessageToReply = { id: replyId, sender, text }; 
     
     replySenderSpan.textContent = `Répondre à ${sender}`;
     replyTextSpan.textContent = text.length > 50 ? text.substring(0, 50) + '...' : text;
@@ -215,14 +224,13 @@ messageForm.addEventListener('submit', function(e) {
         const messageData = {
             message: messageText,
             sender: currentUser,
-            // Ajout du contexte de réponse si présent
             replyTo: currentMessageToReply 
         };
         
         socket.emit('chat message', messageData);
         
         messageInput.value = '';
-        clearReplyContext(); // Efface la boîte après l'envoi
+        clearReplyContext(); 
         
         if (socket) {
             socket.emit('stop typing', currentUser);
@@ -248,9 +256,6 @@ messageInput.addEventListener('input', () => {
 
 // --- 6. Fonctions d'Affichage dans le DOM ---
 
-/**
- * Remplace les URLs trouvées dans un texte par des balises <a> cliquables.
- */
 function autoLink(text) {
     const urlRegex = /(\b(https?:\/\/[^\s]+|www\.[^\s]+))/g;
     
@@ -280,7 +285,6 @@ function formatSeparatorDate(isoString) {
     });
 }
 
-// NOTE: Cette fonction est critique. Elle reçoit replyTo et messageId du serveur.
 function addMessageToDOM(text, sender, isHistory = false, timestamp, replyTo = null, messageId = null) {
     const messageDate = new Date(timestamp);
     const dateString = messageDate.toDateString(); 
@@ -295,12 +299,10 @@ function addMessageToDOM(text, sender, isHistory = false, timestamp, replyTo = n
 
     messageDiv.classList.add('message', senderClass); 
     
-    // Ajout des attributs de données pour le glissement. messageId doit être fourni par le serveur
     messageDiv.setAttribute('data-sender', sender);
     messageDiv.setAttribute('data-text', text);
     messageDiv.setAttribute('data-id', messageId || Date.now()); 
 
-    // Afficher la bulle de citation si 'replyTo' existe
     if (replyTo && replyTo.sender && replyTo.text) {
         const replyBubble = document.createElement('div');
         replyBubble.classList.add('message-reply');
@@ -331,14 +333,13 @@ function addMessageToDOM(text, sender, isHistory = false, timestamp, replyTo = n
     messageDiv.appendChild(headerDiv);
     
     const textNode = document.createElement('p');
-    textNode.innerHTML = autoLink(text); // Utilisation de autoLink
+    textNode.innerHTML = autoLink(text);
     
     textNode.style.margin = '5px 0 0 0';
     messageDiv.appendChild(textNode);
     
     messagesContainer.appendChild(messageDiv);
     
-    // Ajout des écouteurs d'événements de glissement au message
     addSwipeListeners(messageDiv);
     
     if (!isHistory) {
@@ -368,7 +369,7 @@ function addSystemMessage(text) {
 }
 
 
-// --- 7. Fonctions de gestion du SWIPE (glissement) ---
+// --- 7. Fonctions de gestion du SWIPE (glissement CORRIGÉ) ---
 
 function addSwipeListeners(element) {
     element.addEventListener('touchstart', handleTouchStart);
@@ -378,10 +379,13 @@ function addSwipeListeners(element) {
 function handleTouchStart(e) {
     if (e.type === 'mousedown' && e.button !== 0) return; 
 
+    // Définir l'élément actuel à l'élément sur lequel l'événement a démarré
+    currentSwipedElement = this; 
+
     if (e.type === 'mousedown') {
         document.body.style.overflowX = 'hidden'; 
     }
-
+    
     const eventClientX = e.touches ? e.touches[0].clientX : e.clientX;
     
     startX = eventClientX;
@@ -391,25 +395,26 @@ function handleTouchStart(e) {
     document.addEventListener('mousemove', handleTouchMove);
     document.addEventListener('touchend', handleTouchEnd);
     document.addEventListener('mouseup', handleTouchEnd);
-    
-    this.messageElement = this; 
 }
 
 function handleTouchMove(e) {
-    if (startX === 0 || !handleTouchStart.messageElement) return; 
+    if (startX === 0 || !currentSwipedElement) return; 
 
     const eventClientX = e.touches ? e.touches[0].clientX : e.clientX;
     const diffX = eventClientX - startX;
     
-    // Glissement vers la droite (diffX positif)
     if (diffX > 20) {
         isSwiping = true;
         
         const swipeDistance = Math.min(60, diffX);
-        handleTouchStart.messageElement.style.transform = `translateX(${swipeDistance}px)`;
+        currentSwipedElement.style.transform = `translateX(${swipeDistance}px)`;
+        
+        if (e.type === 'touchmove') {
+            // Empêcher le défilement vertical lors du glissement horizontal
+            e.preventDefault(); 
+        }
     } else if (diffX < 0 && isSwiping) {
-        // L'utilisateur annule le glissement
-        handleTouchStart.messageElement.style.transform = `translateX(0px)`;
+        currentSwipedElement.style.transform = `translateX(0px)`;
         isSwiping = false;
     }
 }
@@ -420,22 +425,22 @@ function handleTouchEnd(e) {
     document.removeEventListener('mousemove', handleTouchMove);
     document.removeEventListener('touchend', handleTouchEnd);
     document.removeEventListener('mouseup', handleTouchEnd);
-    document.body.style.overflowX = ''; // Rétablit le défilement horizontal
+    document.body.style.overflowX = ''; 
 
     // Ramener le message à sa position d'origine (visuel)
-    if (handleTouchStart.messageElement) {
-        handleTouchStart.messageElement.style.transform = `translateX(0px)`;
+    if (currentSwipedElement) {
+        currentSwipedElement.style.transform = `translateX(0px)`;
     }
 
     // Si un glissement suffisant a été détecté
-    if (isSwiping) {
-        setReplyContext(handleTouchStart.messageElement);
+    if (isSwiping && currentSwipedElement) {
+        setReplyContext(currentSwipedElement);
     }
     
     // Réinitialisation
     startX = 0;
     isSwiping = false;
-    handleTouchStart.messageElement = null;
+    currentSwipedElement = null; 
 }
 
 function scrollToBottom() {
