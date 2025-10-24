@@ -31,9 +31,17 @@
             
             <p id="typing-indicator" class="hidden" aria-live="polite"></p>
             
+            <div id="reply-box" class="hidden">
+                <div class="reply-content">
+                    <span id="reply-sender"></span>
+                    <span id="reply-text"></span>
+                </div>
+                <button id="cancel-reply" aria-label="Annuler la réponse">✖</button>
+            </div>
+            
             <form id="message-form">
                 <input type="text" id="message-input" placeholder="Écrivez votre message..." required autocomplete="off">
-                <button type="submit">Envoyer</button>
+                <button type="submit" id="send-button">Envoyer</button>
             </form>
         </div>
     </div>
