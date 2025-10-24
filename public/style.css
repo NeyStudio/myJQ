@@ -2,7 +2,7 @@
 body { 
     font-family: sans-serif; 
     background-color: #50BB85; 
-    color: white;
+    color: #223;
     margin: 0; 
     padding: 0; 
     display: flex; 
@@ -13,7 +13,7 @@ body {
 #chat-container { 
     width: 100%; 
     max-width: 900px; 
-    background-color: #36384D; 
+    background-color: #f1f1f1; 
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); 
     height: 100%; 
     display: flex; 
@@ -30,13 +30,13 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 20px;
+    padding: 10px 15px;
     background-color: #274939; 
     color: white;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     font-size: 1.1em;
     font-weight: bold;
-    min-height: 50px; 
+    min-height: 30px; 
     flex-shrink: 0;
 }
 #header-title {
@@ -87,12 +87,12 @@ body {
     touch-action: pan-y; /* Permet le défilement vertical */
 }
 .sender-Olga { 
-    background-color: #ffeb3b; 
+    background-color: #632D79; 
     align-self: flex-end; 
     margin-left: auto; 
 }
 .sender-Eric { 
-    background-color: #81d4fa; 
+    background-color: #17478E; 
     align-self: flex-start; 
     margin-right: auto; 
 }
@@ -201,8 +201,8 @@ body {
 #message-form { 
     display: flex; 
     gap: 10px; 
-    padding: 10px 20px;
-    border-top: 1px solid #eee;
+    padding: 9px 12px;
+    border-top: 0px solid #eee;
     min-height: 40px; 
     flex-shrink: 0; 
 }
