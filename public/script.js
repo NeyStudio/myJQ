@@ -9,7 +9,6 @@ const userSelectionDiv = document.getElementById('user-selection');
 const chatInterfaceDiv = document.getElementById('chat-interface');
 const currentUserDisplay = document.getElementById('current-user-display');
 
-// Indicateurs de statut basés sur les points
 const globalConnectionIndicator = document.getElementById('global-connection-indicator');
 const otherUserStatusDot = document.getElementById('other-user-status-dot'); 
 
@@ -20,40 +19,35 @@ let typingTimeout;
 const TYPING_TIMER_LENGTH = 1500; 
 let lastDisplayedDate = null; 
 
-// --- Logique de Sélection de l'Utilisateur par Bouton ---
-document.getElementById('select-Olga').addEventListener('click', () => initializeChat('Olga'));
-document.getElementById('select-Eric').addEventListener('click', () => initializeChat('Eric'));
+// --- Fonctions utilitaires (inchangées) ---
 
-// Fonction utilitaire pour mettre à jour le point de connexion global
 function updateGlobalStatus(status) {
-    // status: 'green' (connecté), 'orange' (en cours), 'red' (déconnecté)
     globalConnectionIndicator.classList.remove('green', 'orange', 'red');
     globalConnectionIndicator.classList.add(status);
 }
 
-// Fonction utilitaire pour mettre à jour le point de statut de l'autre utilisateur
 function updateOtherUserStatus(isOnline) {
     otherUserStatusDot.classList.remove('green', 'red');
     otherUserStatusDot.classList.add(isOnline ? 'green' : 'red');
 }
+
+// --- Initialisation du Chat (Contient la CORRECTION CLÉ 2) ---
 
 function initializeChat(user) {
     currentUser = user;
     userSelectionDiv.classList.add('hidden');
     chatInterfaceDiv.classList.remove('hidden');
     
-    // NOUVEAU: Affichage dans le titre pour savoir qui on est
     document.getElementById('header-title').textContent = `Chat | ${currentUser}`;
     
-    // 1. Initialiser la connexion Socket.IO
     socket = io(BACKEND_URL); 
     
     updateOtherUserStatus(false);
-    updateGlobalStatus('orange'); // En cours de connexion
+    updateGlobalStatus('orange'); 
 
-    // 2. Événements de connexion/déconnexion
+    // ... (Événements connect/disconnect/history inchangés) ...
     socket.on('connect', () => {
-        updateGlobalStatus('green'); // Connecté
+        updateGlobalStatus('green'); 
         messagesContainer.innerHTML = ''; 
         addSystemMessage(`Yoooooooo ${currentUser}, wait ça charge.`);
         socket.emit('user joined', currentUser); 
@@ -64,33 +58,26 @@ function initializeChat(user) {
         updateOtherUserStatus(false);
     });
     
-    // 3. Réception de l'historique 
     socket.on('history', function(messages) {
         messagesContainer.innerHTML = ''; 
-        
         lastDisplayedDate = null; 
         messages.forEach(msg => {
-            // Utiliser false pour isHistory pour ne pas appeler scrollToBottom à chaque message
             addMessageToDOM(msg.message, msg.sender, false, msg.timestamp); 
         });
-        
-        // CORRECTION CLÉ: Assure le défilement vers le bas UNE FOIS après le chargement
         scrollToBottom(); 
     });
 
-    // 4. Réception de messages en temps réel
     socket.on('chat message', function(data) {
         typingIndicator.classList.add('hidden');
         addMessageToDOM(data.message, data.sender, false, data.timestamp);
-        // scrollToBottom est appelé par addMessageToDOM
     });
     
-    // 5. Gestion des événements de frappe
+    // CORRECTION CLÉ 2: Retrait de scrollToBottom() dans l'événement 'typing'
     socket.on('typing', (sender) => {
         if (sender !== currentUser) {
             typingIndicator.textContent = `${sender} est en train d'écrire...`;
             typingIndicator.classList.remove('hidden');
-            scrollToBottom();
+            // scrollToBottom() RETIRÉ ICI pour ne pas interrompre le défilement !
         }
     });
 
@@ -100,10 +87,8 @@ function initializeChat(user) {
         }
     });
     
-    // 6. Gestion des statuts en ligne
     socket.on('online users', (onlineUsers) => {
         const otherUser = (currentUser === 'Olga') ? 'Eric' : 'Olga';
-        
         if (onlineUsers.includes(otherUser)) {
             updateOtherUserStatus(true);
         } else {
@@ -145,9 +130,25 @@ messageInput.addEventListener('input', () => {
     }, TYPING_TIMER_LENGTH);
 });
 
-// --- Fonctions d'Affichage (inchangées sauf pour la correction du scrollToBottom) ---
+// --- Fonctions d'Affichage (avec autoLink ajouté) ---
+
+/**
+ * Remplace les URLs trouvées dans un texte par des balises <a> cliquables.
+ */
+function autoLink(text) {
+    const urlRegex = /(\b(https?:\/\/[^\s]+|www\.[^\s]+))/g;
+    
+    return text.replace(urlRegex, function(url) {
+        let fullUrl = url;
+        if (!url.match(/^https?:\/\//i)) {
+            fullUrl = 'http://' + url;
+        }
+        return '<a href="' + fullUrl + '" target="_blank" rel="noopener noreferrer">' + url + '</a>';
+    });
+}
 
 function formatTimestamp(isoString) {
+    // ... (code inchangé)
     if (!isoString) return '';
     const date = new Date(isoString);
     const hours = date.getHours().toString().padStart(2, '0');
@@ -156,6 +157,7 @@ function formatTimestamp(isoString) {
 }
 
 function formatSeparatorDate(isoString) {
+    // ... (code inchangé)
     const date = new Date(isoString);
     return date.toLocaleDateString('fr-FR', {
         year: 'numeric',
@@ -198,19 +200,21 @@ function addMessageToDOM(text, sender, isHistory = false, timestamp) {
     messageDiv.appendChild(headerDiv);
     
     const textNode = document.createElement('p');
-    textNode.textContent = text;
+    // Utilisation de autoLink et innerHTML
+    textNode.innerHTML = autoLink(text);
+    
     textNode.style.margin = '5px 0 0 0';
     messageDiv.appendChild(textNode);
     
     messagesContainer.appendChild(messageDiv);
     
-    // Appel de scrollToBottom UNIQUEMENT après l'ajout d'un nouveau message
     if (!isHistory) {
         scrollToBottom(); 
     }
 }
 
 function addDateSeparator(timestamp) {
+    // ... (code inchangé)
     const separatorContainer = document.createElement('div');
     separatorContainer.classList.add('date-separator-container');
 
@@ -223,13 +227,13 @@ function addDateSeparator(timestamp) {
 }
 
 function addSystemMessage(text) {
+    // ... (code inchangé)
     const sysMsg = document.createElement('p');
     sysMsg.style.textAlign = 'center';
     sysMsg.style.fontStyle = 'italic';
     sysMsg.style.fontSize = '0.9em';
     sysMsg.textContent = text;
     messagesContainer.appendChild(sysMsg);
-    // scrollToBottom(); N'est plus appelé ici pour éviter de défiler pendant le chargement initial
 }
 
 function scrollToBottom() {

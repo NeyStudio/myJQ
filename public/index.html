@@ -26,12 +26,13 @@
                     <span id="other-user-status-dot" class="status-dot red" title="Statut de l'autre utilisateur"></span>
                 </div>
             </nav>
+            
             <div id="messages"></div>
             
-            <p id="typing-indicator" class="hidden"></p>
+            <p id="typing-indicator" class="hidden" aria-live="polite"></p>
             
             <form id="message-form">
-                <input type="text" id="message-input" placeholder="Écrivez votre message..." required>
+                <input type="text" id="message-input" placeholder="Écrivez votre message..." required autocomplete="off">
                 <button type="submit">Envoyer</button>
             </form>
         </div>
