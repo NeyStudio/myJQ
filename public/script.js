@@ -7,11 +7,9 @@ const messageForm = document.getElementById('message-form');
 const messageInput = document.getElementById('message-input');
 const userSelectionDiv = document.getElementById('user-selection');
 const chatInterfaceDiv = document.getElementById('chat-interface');
-const currentUserDisplay = document.getElementById('current-user-display');
 
 const globalConnectionIndicator = document.getElementById('global-connection-indicator');
 const otherUserStatusDot = document.getElementById('other-user-status-dot'); 
-
 const typingIndicator = document.getElementById('typing-indicator');
 
 let socket; 
@@ -19,11 +17,34 @@ let typingTimeout;
 const TYPING_TIMER_LENGTH = 1500; 
 let lastDisplayedDate = null; 
 
-// --- Fonctions utilitaires (inchangées) ---
+// NOUVEAU: Variables pour la gestion des notifications et du titre
+let originalTitle = document.title;
+let notificationInterval = null;
+
+
+// --- 1. Logique de Connexion et Statuts ---
 
 function updateGlobalStatus(status) {
+    // status: 'green', 'orange', 'red'
     globalConnectionIndicator.classList.remove('green', 'orange', 'red');
+    
+    // NOUVEAU: Vérification de l'état du réseau physique
+    if (!navigator.onLine) {
+        // Priorité maximale à la déconnexion réseau globale
+        globalConnectionIndicator.classList.add('red');
+        globalConnectionIndicator.title = "Déconnexion réseau (Internet)";
+        return;
+    }
+
     globalConnectionIndicator.classList.add(status);
+    
+    if (status === 'green') {
+        globalConnectionIndicator.title = "Connecté au serveur";
+    } else if (status === 'orange') {
+        globalConnectionIndicator.title = "Connexion en cours...";
+    } else if (status === 'red') {
+        globalConnectionIndicator.title = "Déconnecté du serveur";
+    }
 }
 
 function updateOtherUserStatus(isOnline) {
@@ -31,7 +52,50 @@ function updateOtherUserStatus(isOnline) {
     otherUserStatusDot.classList.add(isOnline ? 'green' : 'red');
 }
 
-// --- Initialisation du Chat (Contient la CORRECTION CLÉ 2) ---
+// --- 2. Logique de Notification (Titre d'Onglet) ---
+
+function startNotification(sender) {
+    if (document.visibilityState === 'visible') return;
+    if (notificationInterval) return; 
+    
+    originalTitle = document.title;
+    let isNotifying = false;
+    
+    notificationInterval = setInterval(() => {
+        document.title = isNotifying ? originalTitle : `(${sender} a écrit...) - ${originalTitle}`;
+        isNotifying = !isNotifying;
+    }, 1000); 
+}
+
+function stopNotification() {
+    if (notificationInterval) {
+        clearInterval(notificationInterval);
+        notificationInterval = null;
+        document.title = originalTitle;
+    }
+}
+
+// Événement d'écoute pour arrêter la notification quand l'utilisateur revient sur l'onglet
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        stopNotification();
+    }
+});
+
+// Événements d'écoute pour le statut réseau natif du navigateur
+window.addEventListener('offline', () => {
+    updateGlobalStatus('red'); 
+});
+window.addEventListener('online', () => {
+    updateGlobalStatus('orange'); // Tentative de reconnexion
+});
+
+
+// --- 3. Initialisation et Logique Socket.IO ---
+
+document.getElementById('select-Olga').addEventListener('click', () => initializeChat('Olga'));
+document.getElementById('select-Eric').addEventListener('click', () => initializeChat('Eric'));
+
 
 function initializeChat(user) {
     currentUser = user;
@@ -45,19 +109,22 @@ function initializeChat(user) {
     updateOtherUserStatus(false);
     updateGlobalStatus('orange'); 
 
-    // ... (Événements connect/disconnect/history inchangés) ...
+    // Connexion
     socket.on('connect', () => {
         updateGlobalStatus('green'); 
+        stopNotification(); 
         messagesContainer.innerHTML = ''; 
         addSystemMessage(`Yoooooooo ${currentUser}, wait ça charge.`);
         socket.emit('user joined', currentUser); 
     });
 
+    // Déconnexion
     socket.on('disconnect', () => {
         updateGlobalStatus('red'); 
         updateOtherUserStatus(false);
     });
     
+    // Historique
     socket.on('history', function(messages) {
         messagesContainer.innerHTML = ''; 
         lastDisplayedDate = null; 
@@ -67,17 +134,23 @@ function initializeChat(user) {
         scrollToBottom(); 
     });
 
+    // Message reçu
     socket.on('chat message', function(data) {
         typingIndicator.classList.add('hidden');
         addMessageToDOM(data.message, data.sender, false, data.timestamp);
+        
+        // Notification pour les messages de l'autre utilisateur
+        if (data.sender !== currentUser) {
+             startNotification(data.sender);
+        }
     });
     
-    // CORRECTION CLÉ 2: Retrait de scrollToBottom() dans l'événement 'typing'
+    // Indicateur de frappe (Affichage sans défilement)
     socket.on('typing', (sender) => {
         if (sender !== currentUser) {
             typingIndicator.textContent = `${sender} est en train d'écrire...`;
             typingIndicator.classList.remove('hidden');
-            // scrollToBottom() RETIRÉ ICI pour ne pas interrompre le défilement !
+            // SCROLLTOBOTTOM RETIRÉ ICI
         }
     });
 
@@ -87,8 +160,10 @@ function initializeChat(user) {
         }
     });
     
+    // Statut en ligne
     socket.on('online users', (onlineUsers) => {
         const otherUser = (currentUser === 'Olga') ? 'Eric' : 'Olga';
+        
         if (onlineUsers.includes(otherUser)) {
             updateOtherUserStatus(true);
         } else {
@@ -97,7 +172,9 @@ function initializeChat(user) {
     });
 }
 
-// --- Logique d'Envoi de Message et de Frappe (inchangée) ---
+
+// --- 4. Logique d'Envoi de Message et de Frappe ---
+
 messageForm.addEventListener('submit', function(e) {
     e.preventDefault();
     const messageText = messageInput.value.trim();
@@ -130,7 +207,8 @@ messageInput.addEventListener('input', () => {
     }, TYPING_TIMER_LENGTH);
 });
 
-// --- Fonctions d'Affichage (avec autoLink ajouté) ---
+
+// --- 5. Fonctions d'Affichage dans le DOM (avec autoLink) ---
 
 /**
  * Remplace les URLs trouvées dans un texte par des balises <a> cliquables.
@@ -148,7 +226,6 @@ function autoLink(text) {
 }
 
 function formatTimestamp(isoString) {
-    // ... (code inchangé)
     if (!isoString) return '';
     const date = new Date(isoString);
     const hours = date.getHours().toString().padStart(2, '0');
@@ -157,7 +234,6 @@ function formatTimestamp(isoString) {
 }
 
 function formatSeparatorDate(isoString) {
-    // ... (code inchangé)
     const date = new Date(isoString);
     return date.toLocaleDateString('fr-FR', {
         year: 'numeric',
@@ -200,8 +276,7 @@ function addMessageToDOM(text, sender, isHistory = false, timestamp) {
     messageDiv.appendChild(headerDiv);
     
     const textNode = document.createElement('p');
-    // Utilisation de autoLink et innerHTML
-    textNode.innerHTML = autoLink(text);
+    textNode.innerHTML = autoLink(text); // Utilisation de autoLink
     
     textNode.style.margin = '5px 0 0 0';
     messageDiv.appendChild(textNode);
@@ -214,7 +289,6 @@ function addMessageToDOM(text, sender, isHistory = false, timestamp) {
 }
 
 function addDateSeparator(timestamp) {
-    // ... (code inchangé)
     const separatorContainer = document.createElement('div');
     separatorContainer.classList.add('date-separator-container');
 
@@ -227,7 +301,6 @@ function addDateSeparator(timestamp) {
 }
 
 function addSystemMessage(text) {
-    // ... (code inchangé)
     const sysMsg = document.createElement('p');
     sysMsg.style.textAlign = 'center';
     sysMsg.style.fontStyle = 'italic';
