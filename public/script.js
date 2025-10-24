@@ -21,10 +21,10 @@ let lastDisplayedDate = null;
 let originalTitle = document.title;
 let notificationInterval = null;
 
-// NOUVEAU: Variables et DOM pour la réponse par glissement
+// Variables et DOM pour la réponse par glissement
 let isSwiping = false;
 let startX = 0;
-let currentMessageToReply = null; // Stocke les données du message cité
+let currentMessageToReply = null; 
 const replyBox = document.getElementById('reply-box');
 const replySenderSpan = document.getElementById('reply-sender');
 const replyTextSpan = document.getElementById('reply-text');
@@ -128,21 +128,21 @@ function initializeChat(user) {
         updateOtherUserStatus(false);
     });
     
-    // Historique (mis à jour pour la réponse)
+    // Historique 
     socket.on('history', function(messages) {
         messagesContainer.innerHTML = ''; 
         lastDisplayedDate = null; 
+        // L'historique envoie : message, sender, timestamp, replyTo, id
         messages.forEach(msg => {
-            // Le serveur doit renvoyer msg.replyTo et msg.id
-            addMessageToDOM(msg.message, msg.sender, false, msg.timestamp, msg.replyTo, msg.id); 
+            addMessageToDOM(msg.message, msg.sender, true, msg.timestamp, msg.replyTo, msg.id); 
         });
         scrollToBottom(); 
     });
 
-    // Message reçu (mis à jour pour la réponse)
+    // Message reçu
     socket.on('chat message', function(data) {
         typingIndicator.classList.add('hidden');
-        // Le serveur doit renvoyer data.replyTo et data.id
+        // Le chat message envoie : message, sender, timestamp, replyTo, id
         addMessageToDOM(data.message, data.sender, false, data.timestamp, data.replyTo, data.id);
         
         if (data.sender !== currentUser) {
@@ -185,10 +185,9 @@ function setReplyContext(messageElement) {
     const text = messageElement.getAttribute('data-text');
     const id = messageElement.getAttribute('data-id');
 
-    currentMessageToReply = { id, sender, text };
+    currentMessageToReply = { id: parseInt(id), sender, text }; // Conversion ID en Integer
     
     replySenderSpan.textContent = `Répondre à ${sender}`;
-    // Limiter l'affichage du texte pour la boîte
     replyTextSpan.textContent = text.length > 50 ? text.substring(0, 50) + '...' : text;
     replyBox.classList.remove('hidden');
 
@@ -205,7 +204,7 @@ function clearReplyContext() {
 cancelReplyButton.addEventListener('click', clearReplyContext);
 
 
-// --- 5. Logique d'Envoi de Message et de Frappe (MISE À JOUR) ---
+// --- 5. Logique d'Envoi de Message et de Frappe ---
 
 messageForm.addEventListener('submit', function(e) {
     e.preventDefault();
@@ -247,7 +246,7 @@ messageInput.addEventListener('input', () => {
 });
 
 
-// --- 6. Fonctions d'Affichage dans le DOM (MISE À JOUR) ---
+// --- 6. Fonctions d'Affichage dans le DOM ---
 
 /**
  * Remplace les URLs trouvées dans un texte par des balises <a> cliquables.
@@ -281,6 +280,7 @@ function formatSeparatorDate(isoString) {
     });
 }
 
+// NOTE: Cette fonction est critique. Elle reçoit replyTo et messageId du serveur.
 function addMessageToDOM(text, sender, isHistory = false, timestamp, replyTo = null, messageId = null) {
     const messageDate = new Date(timestamp);
     const dateString = messageDate.toDateString(); 
@@ -295,12 +295,12 @@ function addMessageToDOM(text, sender, isHistory = false, timestamp, replyTo = n
 
     messageDiv.classList.add('message', senderClass); 
     
-    // NOUVEAU: Ajouter les attributs de données pour le glissement 
+    // Ajout des attributs de données pour le glissement. messageId doit être fourni par le serveur
     messageDiv.setAttribute('data-sender', sender);
     messageDiv.setAttribute('data-text', text);
     messageDiv.setAttribute('data-id', messageId || Date.now()); 
 
-    // NOUVEAU: Afficher la bulle de citation si 'replyTo' existe
+    // Afficher la bulle de citation si 'replyTo' existe
     if (replyTo && replyTo.sender && replyTo.text) {
         const replyBubble = document.createElement('div');
         replyBubble.classList.add('message-reply');
@@ -338,7 +338,7 @@ function addMessageToDOM(text, sender, isHistory = false, timestamp, replyTo = n
     
     messagesContainer.appendChild(messageDiv);
     
-    // NOUVEAU: Ajout des écouteurs d'événements de glissement au message
+    // Ajout des écouteurs d'événements de glissement au message
     addSwipeListeners(messageDiv);
     
     if (!isHistory) {
@@ -346,7 +346,26 @@ function addMessageToDOM(text, sender, isHistory = false, timestamp, replyTo = n
     }
 }
 
-// ... (addDateSeparator et addSystemMessage inchangés) ...
+function addDateSeparator(timestamp) {
+    const separatorContainer = document.createElement('div');
+    separatorContainer.classList.add('date-separator-container');
+
+    const separator = document.createElement('span');
+    separator.classList.add('date-separator');
+    separator.textContent = formatSeparatorDate(timestamp);
+    
+    separatorContainer.appendChild(separator);
+    messagesContainer.appendChild(separatorContainer);
+}
+
+function addSystemMessage(text) {
+    const sysMsg = document.createElement('p');
+    sysMsg.style.textAlign = 'center';
+    sysMsg.style.fontStyle = 'italic';
+    sysMsg.style.fontSize = '0.9em';
+    sysMsg.textContent = text;
+    messagesContainer.appendChild(sysMsg);
+}
 
 
 // --- 7. Fonctions de gestion du SWIPE (glissement) ---
@@ -359,9 +378,7 @@ function addSwipeListeners(element) {
 function handleTouchStart(e) {
     if (e.type === 'mousedown' && e.button !== 0) return; 
 
-    // Assurez-vous que le défilement de la conversation n'est pas bloqué lors d'un simple clic
     if (e.type === 'mousedown') {
-        // Empêche le défilement horizontal du corps si l'utilisateur commence à glisser
         document.body.style.overflowX = 'hidden'; 
     }
 
@@ -388,7 +405,6 @@ function handleTouchMove(e) {
     if (diffX > 20) {
         isSwiping = true;
         
-        // Applique la transformation visuelle (max 60px)
         const swipeDistance = Math.min(60, diffX);
         handleTouchStart.messageElement.style.transform = `translateX(${swipeDistance}px)`;
     } else if (diffX < 0 && isSwiping) {
