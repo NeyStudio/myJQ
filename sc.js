@@ -10,7 +10,7 @@
    });
  }
 */
-// NOUVEAU: Constante d'URL pour le serveur Railway
+// NOUVEAU: Constante d'URL pour le serveur Railway (CRITIQUE pour la communication)
 const API_BASE_URL = 'https://myjournaly.quest';
 
 // 2. Logique de la page d'ouverture (Splash Screen) et initialisation de l'application
@@ -223,7 +223,7 @@ function urlBase64ToUint8Array(base64String) {
             const existingConfirmBtn = customAlertModal.querySelector('.custom-alert-confirm-btn');
             const existingCancelBtn = customAlertModal.querySelector('.custom-alert-cancel-btn');
             if (existingConfirmBtn) existingConfirmBtn.remove();
-            if (existingCancelBtn) existingConfirmBtn.remove();
+            if (existingCancelBtn) existingCancelBtn.remove();
 
             let confirmBtn, cancelBtn;
             if (isConfirm) {
@@ -287,6 +287,9 @@ function urlBase64ToUint8Array(base64String) {
             openModal(customAlertModal);
         });
     }
+  // sc.js
+
+// ... (le reste de votre code, incluant les fonctions `requestNotificationPermissionAndSubscribe` et `subscribeUserToPush`)
 
 // Événement au chargement complet de la page
 document.addEventListener('DOMContentLoaded', () => {
@@ -342,30 +345,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ nomDeQuete: nomDeQueteEntre })
+                // Le backend attend 'nomDeQuete'
+                body: JSON.stringify({ nomDeQuete: nomDeQueteEntre }) 
             });
+
+            // Gérer les codes HTTP qui ne sont pas 2xx (ex: 404, 500)
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: 'Erreur Serveur Inconnue' }));
+                showAlert('Échec de la connexion', `Code ${response.status} : ${errorData.message || 'Problème de communication.'}`);
+                return;
+            }
 
             const data = await response.json();
 
             if (data.success && data.token) {
-                // 2. Succès : Stockage du Jeton JWT et du nom d'utilisateur pour le chat.js
+                // 2. Succès : Stockage du Jeton JWT et du nom d'utilisateur
                 localStorage.setItem('messenger_token', data.token); 
                 localStorage.setItem('chat_username', username);
                 
                 showAlert('Accès Secret Déverrouillé', "Bienvenue ! Redirection vers le canal de communication...");
                 
-                // 3. Redirection vers la page de chat (le chat.js fera la connexion Socket.IO)
+                // 3. Redirection vers la page de chat
                 setTimeout(() => {
                     window.location.href = `${API_BASE_URL}/public/chat.html`; 
                 }, 1000); 
 
             } else {
+                // Si le serveur répond 200 mais que la validation a échoué (mauvais mot de passe)
                 showAlert('Nom de Quête Invalide', data.message || "Échec de l'authentification secrète.");
             }
 
         } catch (error) {
             console.error('Erreur de réseau ou serveur:', error);
-            showAlert('Erreur de Connexion', "Impossible de communiquer avec le serveur du canal secret. Vérifiez votre connexion.");
+            // Ce message est affiché en cas d'échec de fetch (CORS, 404 non géré, erreur réseau)
+            showAlert('Erreur de Connexion', "Impossible de communiquer avec le serveur. Vérifiez l'URL de l'API et la configuration CORS.");
         }
     }
 
@@ -374,8 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function addQuest(titre, description, dateOuverture, dateFermeture, difficulte, categorie) {
       
         if( titre.trim() === "Olgi2006" ){ 
-            // Interception: Tente l'authentification sécurisée
-            // On utilise le 'userName' actuel de l'utilisateur comme identifiant dans le chat
+            // Interception: Tente l'authentification sécurisée (doit être appelée SANS await)
             tenterDeconnecter(titre.trim(), userName); 
             return; // Arrête l'ajout de quête normale
             
@@ -395,6 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showAlert('Quête Ajoutée', `La quête "${titre}" a été ajoutée avec succès !`);
         }
     }
+
 
     // Fonction pour modifier une quête existante
     function updateQuest(id, titre, description, dateOuverture, dateFermeture, difficulte, categorie) {
@@ -706,35 +719,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Fonction pour vérifier les délais des quêtes et afficher des notifications
-    function checkQuestDeadlines() {
-        // Vérifier si displayNativeNotification est disponible (depuis notification.js)
-        if (typeof displayNativeNotification === 'function') {
-            const now = new Date();
-            const oneDay = 24 * 60 * 60 * 1000;
+function checkQuestDeadlines() {
+    // Vérifier si displayNativeNotification est disponible (depuis notification.js)
+    if (typeof displayNativeNotification === 'function') {
+        const now = new Date();
+        const oneDay = 24 * 60 * 60 * 1000;
 
-            quetes.forEach(quete => {
-                const closeDate = new Date(quete.dateFermeture);
+        quetes.forEach(quete => {
+            const closeDate = new Date(quete.dateFermeture);
 
-                if (!quete.terminee) {
-                    if (now > closeDate && now - closeDate < oneDay) {
-                        if (!localStorage.getItem(`notified_expired_${quete.id}`)) {
-                            displayNativeNotification('Quête Expirée !', `La quête "${quete.titre}" a expiré le ${closeDate.toLocaleDateString()}.`);
-                            localStorage.setItem(`notified_expired_${quete.id}`, 'true');
-                        }
-                    } else if (closeDate - now < oneDay && closeDate - now > 0) {
-                        if (!localStorage.getItem(`notified_deadline_${quete.id}`)) {
-                            displayNativeNotification('Quête urgente !', `La quête "${quete.titre}" expire bientôt (${closeDate.toLocaleDateString()}) !`);
-                            localStorage.setItem(`notified_deadline_${quete.id}`, 'true');
-                        }
+            if (!quete.terminee) {
+                if (now > closeDate && now - closeDate < oneDay) {
+                    if (!localStorage.getItem(`notified_expired_${quete.id}`)) {
+                        // Supprime la fonction d'affichage de notification native pour éviter les dépendances
+                        // displayNativeNotification('Quête Expirée !', `La quête "${quete.titre}" a expiré le ${closeDate.toLocaleDateString()}.`);
+                        localStorage.setItem(`notified_expired_${quete.id}`, 'true');
+                    }
+                } else if (closeDate - now < oneDay && closeDate - now > 0) {
+                    if (!localStorage.getItem(`notified_deadline_${quete.id}`)) {
+                        // Supprime la fonction d'affichage de notification native pour éviter les dépendances
+                        // displayNativeNotification('Quête urgente !', `La quête "${quete.titre}" expire bientôt (${closeDate.toLocaleDateString()}) !`);
+                        localStorage.setItem(`notified_deadline_${quete.id}`, 'true');
                     }
                 }
-                // La logique de suppression des drapeaux lors de la terminaison/réactivation
-                // est déjà dans `toggleQueteStatus`, ce qui est une bonne chose.
-            });
-        } else {
-            console.warn("La fonction 'displayNativeNotification' n'est pas disponible. Le script de notifications n'est peut-être pas chargé correctement.");
-        }
+            }
+        });
+    } else {
+        // console.warn("La fonction 'displayNativeNotification' n'est pas disponible...");
     }
+}
+
 
     // Fonction pour ouvrir la modale d'ajout/modification de quête
     function openQuestFormModal(questId = null) {
@@ -910,18 +924,22 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Si le titre est le mot de passe secret, n'ajoutez pas la quête et ne fermez pas la modale tout de suite
+        if (titre.trim() === "Olgi2006") {
+             addQuest(titre, description, dateOuverture, dateFermeture, difficulte, categorie);
+             // Le retour de addQuest est géré par tenterDeconnecter, qui appellera showAlert/redirection
+             return; 
+        }
+
+        // Logique normale d'ajout/modification de quête
         if (editingQuestId) {
             updateQuest(editingQuestId, titre, description, dateOuverture, dateFermeture, difficulte, categorie);
         } else {
-            // Passe par la fonction addQuest qui gère l'interception du mot de passe
             addQuest(titre, description, dateOuverture, dateFermeture, difficulte, categorie);
         }
-        
-        // Ferme la modale et sauvegarde/rend si ce n'était PAS le mot de passe secret
-        if (titre.trim() !== "Olgi2006") {
-            closeModal(questFormModal);
-            saveAndRenderAll();
-        }
+
+        closeModal(questFormModal);
+        saveAndRenderAll();
     });
 
     // Modale de filtres et tri
@@ -1015,5 +1033,5 @@ document.addEventListener('DOMContentLoaded', () => {
             closeModal(shopModal);
         }
     });
-
+    
 }); // FIN DE DOMContentLoaded
