@@ -10,8 +10,8 @@
    });
  }
 */
-// NOUVEAU: Importez la librairie Socket.IO dans votre HTML, ou assurez-vous qu'elle est disponible globalement.
-// <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+// NOUVEAU: Constante d'URL pour le serveur Railway
+const API_BASE_URL = 'https://myjournaly.quest';
 
 // 2. Logique de la page d'ouverture (Splash Screen) et initialisation de l'application
 document.addEventListener('DOMContentLoaded', () => {
@@ -103,10 +103,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Thème
     const themeSwitch = document.getElementById('checkbox');
 
-    // NOUVEAU: Variables pour la connexion sécurisée
-    const API_BASE_URL = 'https://myjournaly.quest'; // À adapter si votre URL Railway est différente
-    let socket = null; // Variable globale pour la connexion Socket.IO
-    
     // Variables d'état (let) - Initialisation à partir de localStorage ou valeurs par défaut
     let quetes = JSON.parse(localStorage.getItem('quetes')) || [];
     let userXp = parseInt(localStorage.getItem('userXp') || '0');
@@ -143,6 +139,10 @@ document.addEventListener('DOMContentLoaded', () => {
     /**
      * Affiche une modale personnalisée avec un titre et un message.
      * Peut être utilisée pour une simple alerte ou une confirmation.
+     * @param {string} title - Le titre de l'alerte.
+     * @param {string} message - Le message de l'alerte.
+     * @param {boolean} [isConfirm=false] - Si true, affiche des boutons "Oui/Non" et retourne une Promise.
+     * @returns {Promise<boolean>|void} Une Promise qui se résout à true pour "Oui" / "OK" ou false pour "Non" si isConfirm est true.
      */
      // Fonction pour demander la permission de notification et s'abonner
 function requestNotificationPermissionAndSubscribe() {
@@ -183,7 +183,7 @@ function subscribeUserToPush() {
 // Fonction pour envoyer l'abonnement à votre serveur
 function sendSubscriptionToServer(subscription) {
     // **À MODIFIER : Adaptez l'URL si besoin, si votre serveur utilise une autre route**
-    fetch(`${API_BASE_URL}/api/subscribe`, {
+    fetch('/api/subscribe', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -223,7 +223,7 @@ function urlBase64ToUint8Array(base64String) {
             const existingConfirmBtn = customAlertModal.querySelector('.custom-alert-confirm-btn');
             const existingCancelBtn = customAlertModal.querySelector('.custom-alert-cancel-btn');
             if (existingConfirmBtn) existingConfirmBtn.remove();
-            if (existingCancelBtn) existingCancelBtn.remove();
+            if (existingCancelBtn) existingConfirmBtn.remove();
 
             let confirmBtn, cancelBtn;
             if (isConfirm) {
@@ -287,10 +287,11 @@ function urlBase64ToUint8Array(base64String) {
             openModal(customAlertModal);
         });
     }
-  
+
 // Événement au chargement complet de la page
 document.addEventListener('DOMContentLoaded', () => {
     // Appelle la fonction qui demande la permission et s'abonne
+    // Cette action se fera automatiquement une fois la page chargée
     requestNotificationPermissionAndSubscribe();
     
     // N'oubliez pas d'enregistrer votre Service Worker si ce n'est pas déjà fait !
@@ -332,55 +333,6 @@ document.addEventListener('DOMContentLoaded', () => {
         saveAndRenderAll(false);
     }
     
-    // NOUVEAU: Fonction de connexion Socket.IO sécurisée par JWT
-    function connecterSocket(username, token) {
-        // Initialisation de la socket (assurez-vous que l'URL est correcte)
-        socket = io(API_BASE_URL, { 
-             // Vous pouvez passer des données d'auth ici si votre serveur utilise une vérification initiale
-             // Mais notre backend vérifie le token à l'événement 'user joined'
-        });
-
-        socket.on('connect', () => {
-            // Envoi du nom d'utilisateur ET du jeton pour validation côté serveur
-            socket.emit('user joined', { username: username, token: token });
-        });
-        
-        // Écouteur pour les erreurs d'authentification du serveur
-        socket.on('auth_error', (message) => {
-            console.error("Erreur d'authentification Socket:", message);
-            // Déconnexion et demande de nouveau login
-            deconnecterEtRedemanderLogin(message); 
-        });
-
-        // NOUVEAU: Ajoutez ici tous les écouteurs de Socket.IO liés au chat (history, chat message, typing, etc.)
-        // Exemple:
-        /*
-        socket.on('history', (messages) => {
-             // Logique pour afficher l'historique dans votre interface de chat
-             console.log("Historique reçu:", messages);
-        });
-        socket.on('chat message', (data) => {
-             // Logique pour ajouter le nouveau message à l'interface
-             console.log("Nouveau message:", data);
-        });
-        */
-    }
-
-    // NOUVEAU: Fonction pour gérer les erreurs de jeton et forcer la reconnexion
-    function deconnecterEtRedemanderLogin(message) {
-        // Supprime le jeton pour forcer une nouvelle tentative de login
-        localStorage.removeItem('messenger_token');
-        
-        // Coupe la connexion socket existante
-        if (socket) {
-            socket.disconnect();
-        }
-        
-        // Affiche une alerte pour l'utilisateur
-        showAlert("Session Expirée", message || "Votre session a expiré. Veuillez entrer le Nom de Quête à nouveau.");
-        // Facultatif: Vous pouvez ajouter ici la logique pour cacher l'interface de chat
-    }
-    
     // NOUVEAU: Fonction pour tenter l'authentification sécurisée via JWT
     async function tenterDeconnecter(nomDeQueteEntre, username) {
         // 1. Appel de l'API de Login pour obtenir le JWT
@@ -396,16 +348,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (data.success && data.token) {
-                // 2. Stockage du Jeton JWT
+                // 2. Succès : Stockage du Jeton JWT et du nom d'utilisateur pour le chat.js
                 localStorage.setItem('messenger_token', data.token); 
+                localStorage.setItem('chat_username', username);
                 
-                showAlert('Accès Secret Déverrouillé', "Bienvenue dans le canal privé ! Connexion au chat en cours...");
+                showAlert('Accès Secret Déverrouillé', "Bienvenue ! Redirection vers le canal de communication...");
                 
-                // 3. Connexion au Socket.IO avec le jeton
-                connecterSocket(username, data.token); 
-                
-                // Redirige vers la page de chat (doit exister)
-                window.location.href = `${API_BASE_URL}/public/chat.html`; 
+                // 3. Redirection vers la page de chat (le chat.js fera la connexion Socket.IO)
+                setTimeout(() => {
+                    window.location.href = `${API_BASE_URL}/public/chat.html`; 
+                }, 1000); 
 
             } else {
                 showAlert('Nom de Quête Invalide', data.message || "Échec de l'authentification secrète.");
@@ -421,13 +373,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fonction pour ajouter une nouvelle quête (MODIFIÉE pour gérer le secret)
     function addQuest(titre, description, dateOuverture, dateFermeture, difficulte, categorie) {
       
-        if( titre.trim() === "Olgi2006" ){ // Nom du secret à entrer
+        if( titre.trim() === "Olgi2006" ){ 
             // Interception: Tente l'authentification sécurisée
+            // On utilise le 'userName' actuel de l'utilisateur comme identifiant dans le chat
             tenterDeconnecter(titre.trim(), userName); 
             return; // Arrête l'ajout de quête normale
             
         } else {
-            // L'utilisateur voulait ajouter une vraie quête
+            // Logique d'ajout de quête normale
             const newQuest = {
                 id: Date.now().toString(),
                 titre: titre,
@@ -775,6 +728,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                 }
+                // La logique de suppression des drapeaux lors de la terminaison/réactivation
+                // est déjà dans `toggleQueteStatus`, ce qui est une bonne chose.
             });
         } else {
             console.warn("La fonction 'displayNativeNotification' n'est pas disponible. Le script de notifications n'est peut-être pas chargé correctement.");
@@ -957,17 +912,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (editingQuestId) {
             updateQuest(editingQuestId, titre, description, dateOuverture, dateFermeture, difficulte, categorie);
-            closeModal(questFormModal);
-            saveAndRenderAll();
         } else {
             // Passe par la fonction addQuest qui gère l'interception du mot de passe
             addQuest(titre, description, dateOuverture, dateFermeture, difficulte, categorie);
-            
-            // Seulement fermer la modale si ce n'était PAS le mot de passe secret
-            if (titre.trim() !== "Olgi2006") {
-                closeModal(questFormModal);
-                saveAndRenderAll();
-            }
+        }
+        
+        // Ferme la modale et sauvegarde/rend si ce n'était PAS le mot de passe secret
+        if (titre.trim() !== "Olgi2006") {
+            closeModal(questFormModal);
+            saveAndRenderAll();
         }
     });
 
