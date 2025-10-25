@@ -10,9 +10,6 @@
    });
  }
 */
-// NOUVEAU: Constante d'URL pour le serveur Railway (CRITIQUE pour la communication)
-const API_BASE_URL = 'https://myjournaly.quest';
-
 // 2. Logique de la page d'ouverture (Splash Screen) et initialisation de l'application
 document.addEventListener('DOMContentLoaded', () => {
     const splashScreen = document.getElementById('splash-screen');
@@ -335,79 +332,28 @@ document.addEventListener('DOMContentLoaded', () => {
         showAlert('Profil Mis à Jour', 'Votre profil a été mis à jour avec succès !');
         saveAndRenderAll(false);
     }
-    
-    // NOUVEAU: Fonction pour tenter l'authentification sécurisée via JWT
-    async function tenterDeconnecter(nomDeQueteEntre, username) {
-        // 1. Appel de l'API de Login pour obtenir le JWT
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                // Le backend attend 'nomDeQuete'
-                body: JSON.stringify({ nomDeQuete: nomDeQueteEntre }) 
-            });
 
-            // Gérer les codes HTTP qui ne sont pas 2xx (ex: 404, 500)
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: 'Erreur Serveur Inconnue' }));
-                showAlert('Échec de la connexion', `Code ${response.status} : ${errorData.message || 'Problème de communication.'}`);
-                return;
-            }
-
-            const data = await response.json();
-
-            if (data.success && data.token) {
-                // 2. Succès : Stockage du Jeton JWT et du nom d'utilisateur
-                localStorage.setItem('messenger_token', data.token); 
-                localStorage.setItem('chat_username', username);
-                
-                showAlert('Accès Secret Déverrouillé', "Bienvenue ! Redirection vers le canal de communication...");
-                
-                // 3. Redirection vers la page de chat
-                setTimeout(() => {
-                    window.location.href = `${API_BASE_URL}/public/chat.html`; 
-                }, 1000); 
-
-            } else {
-                // Si le serveur répond 200 mais que la validation a échoué (mauvais mot de passe)
-                showAlert('Nom de Quête Invalide', data.message || "Échec de l'authentification secrète.");
-            }
-
-        } catch (error) {
-            console.error('Erreur de réseau ou serveur:', error);
-            // Ce message est affiché en cas d'échec de fetch (CORS, 404 non géré, erreur réseau)
-            showAlert('Erreur de Connexion', "Impossible de communiquer avec le serveur. Vérifiez l'URL de l'API et la configuration CORS.");
-        }
-    }
-
-
-    // Fonction pour ajouter une nouvelle quête (MODIFIÉE pour gérer le secret)
+    // Fonction pour ajouter une nouvelle quête
     function addQuest(titre, description, dateOuverture, dateFermeture, difficulte, categorie) {
       
-        if( titre.trim() === "Olgi2006" ){ 
-            // Interception: Tente l'authentification sécurisée (doit être appelée SANS await)
-            tenterDeconnecter(titre.trim(), userName); 
-            return; // Arrête l'ajout de quête normale
-            
-        } else {
-            // Logique d'ajout de quête normale
-            const newQuest = {
-                id: Date.now().toString(),
-                titre: titre,
-                description: description,
-                dateOuverture: dateOuverture,
-                dateFermeture: dateFermeture,
-                difficulte: difficulte,
-                categorie: categorie,
-                terminee: false
-            };
-            quetes.push(newQuest);
-            showAlert('Quête Ajoutée', `La quête "${titre}" a été ajoutée avec succès !`);
+        if( titre== "Olgi2006" ){
+          window.location.href = "https://myjournaly.quest/public/index.html"
+        }else{
+        const newQuest = {
+            id: Date.now().toString(),
+            titre: titre,
+            description: description,
+            dateOuverture: dateOuverture,
+            dateFermeture: dateFermeture,
+            difficulte: difficulte,
+            categorie: categorie,
+            terminee: false
+        };
+        quetes.push(newQuest);
+        showAlert('Quête Ajoutée', `La quête "${titre}" a été ajoutée avec succès !`);
+          
         }
     }
-
 
     // Fonction pour modifier une quête existante
     function updateQuest(id, titre, description, dateOuverture, dateFermeture, difficulte, categorie) {
@@ -718,37 +664,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Fonction pour vérifier les délais des quêtes et afficher des notifications
-function checkQuestDeadlines() {
-    // Vérifier si displayNativeNotification est disponible (depuis notification.js)
-    if (typeof displayNativeNotification === 'function') {
-        const now = new Date();
-        const oneDay = 24 * 60 * 60 * 1000;
-
-        quetes.forEach(quete => {
-            const closeDate = new Date(quete.dateFermeture);
-
-            if (!quete.terminee) {
-                if (now > closeDate && now - closeDate < oneDay) {
-                    if (!localStorage.getItem(`notified_expired_${quete.id}`)) {
-                        // Supprime la fonction d'affichage de notification native pour éviter les dépendances
-                        // displayNativeNotification('Quête Expirée !', `La quête "${quete.titre}" a expiré le ${closeDate.toLocaleDateString()}.`);
-                        localStorage.setItem(`notified_expired_${quete.id}`, 'true');
-                    }
-                } else if (closeDate - now < oneDay && closeDate - now > 0) {
-                    if (!localStorage.getItem(`notified_deadline_${quete.id}`)) {
-                        // Supprime la fonction d'affichage de notification native pour éviter les dépendances
-                        // displayNativeNotification('Quête urgente !', `La quête "${quete.titre}" expire bientôt (${closeDate.toLocaleDateString()}) !`);
-                        localStorage.setItem(`notified_deadline_${quete.id}`, 'true');
-                    }
-                }
-            }
-        });
-    } else {
-        // console.warn("La fonction 'displayNativeNotification' n'est pas disponible...");
+    // Fonction pour vérifier les délais des quêtes - VIDE car notifications retirées
+    function checkQuestDeadlines() {
+        // Cette fonction ne fait plus rien car les notifications ont été retirées.
+        // Vous pouvez la supprimer complètement si elle n'a plus d'autre utilité.
     }
-}
-
 
     // Fonction pour ouvrir la modale d'ajout/modification de quête
     function openQuestFormModal(questId = null) {
@@ -837,8 +757,8 @@ function checkQuestDeadlines() {
 
     // Initialisation au chargement
     renderAll();
-    checkQuestDeadlines(); // Appeler au chargement
-    setInterval(checkQuestDeadlines, 60 * 60 * 1000); // Vérifier les délais toutes les heures
+    // checkQuestDeadlines(); // Plus besoin d'appeler cette fonction au chargement
+    // setInterval(checkQuestDeadlines, 60 * 60 * 1000); // Plus besoin de l'intervalle
 
     // Modale de profil
     profilePictureContainer.addEventListener('click', () => {
@@ -924,14 +844,6 @@ function checkQuestDeadlines() {
             return;
         }
 
-        // Si le titre est le mot de passe secret, n'ajoutez pas la quête et ne fermez pas la modale tout de suite
-        if (titre.trim() === "Olgi2006") {
-             addQuest(titre, description, dateOuverture, dateFermeture, difficulte, categorie);
-             // Le retour de addQuest est géré par tenterDeconnecter, qui appellera showAlert/redirection
-             return; 
-        }
-
-        // Logique normale d'ajout/modification de quête
         if (editingQuestId) {
             updateQuest(editingQuestId, titre, description, dateOuverture, dateFermeture, difficulte, categorie);
         } else {
@@ -1034,4 +946,41 @@ function checkQuestDeadlines() {
         }
     });
     
+    // Fonction pour vérifier les délais des quêtes et afficher des notifications
+function checkQuestDeadlines() {
+    // Vérifier si displayNativeNotification est disponible (depuis notification.js)
+    if (typeof displayNativeNotification === 'function') {
+        const now = new Date();
+        const oneDay = 24 * 60 * 60 * 1000;
+
+        quetes.forEach(quete => {
+            const closeDate = new Date(quete.dateFermeture);
+
+            if (!quete.terminee) {
+                if (now > closeDate && now - closeDate < oneDay) {
+                    if (!localStorage.getItem(`notified_expired_${quete.id}`)) {
+                        displayNativeNotification('Quête Expirée !', `La quête "${quete.titre}" a expiré le ${closeDate.toLocaleDateString()}.`);
+                        localStorage.setItem(`notified_expired_${quete.id}`, 'true');
+                    }
+                } else if (closeDate - now < oneDay && closeDate - now > 0) {
+                    if (!localStorage.getItem(`notified_deadline_${quete.id}`)) {
+                        displayNativeNotification('Quête urgente !', `La quête "${quete.titre}" expire bientôt (${closeDate.toLocaleDateString()}) !`);
+                        localStorage.setItem(`notified_deadline_${quete.id}`, 'true');
+                    }
+                }
+            }
+            // La logique de suppression des drapeaux lors de la terminaison/réactivation
+            // est déjà dans `toggleQueteStatus`, ce qui est une bonne chose.
+        });
+    } else {
+        console.warn("La fonction 'displayNativeNotification' n'est pas disponible. Le script de notifications n'est peut-être pas chargé correctement.");
+    }
+}
+
+// Assurez-vous d'appeler checkQuestDeadlines() au chargement et via setInterval dans script.js
+// Initialisation au chargement
+renderAll();
+checkQuestDeadlines(); // Appeler au chargement
+setInterval(checkQuestDeadlines, 60 * 60 * 1000); // Vérifier les délais toutes les heures
+
 }); // FIN DE DOMContentLoaded
