@@ -10,21 +10,19 @@ const chatInterfaceDiv = document.getElementById('chat-interface');
 
 const globalConnectionIndicator = document.getElementById('global-connection-indicator');
 const otherUserStatusDot = document.getElementById('other-user-status-dot'); 
-const typingIndicatorContainer = document.getElementById('typing-indicator-container'); // MODIFIÉ
-const typingIndicatorBubble = document.getElementById('typing-indicator-bubble'); // NOUVEAU
-const reactionPicker = document.getElementById('reaction-picker'); // NOUVEAU
-const scrollToBottomButton = document.getElementById('scroll-to-bottom-button'); // NOUVEAU
+const typingBubbleWrapper = document.getElementById('typing-bubble-wrapper'); 
+const typingIndicatorBubble = document.getElementById('typing-indicator-bubble'); 
+const reactionPicker = document.getElementById('reaction-picker'); 
+const scrollToBottomButton = document.getElementById('scroll-to-bottom-button'); 
 
 let socket; 
 let typingTimeout;
 const TYPING_TIMER_LENGTH = 1500; 
 let lastDisplayedDate = null; 
 
-// Variables pour la gestion des notifications et du titre
 let originalTitle = document.title;
 let notificationInterval = null;
 
-// Variables pour la réponse par glissement 
 let isSwiping = false;
 let startX = 0;
 let currentMessageToReply = null; 
@@ -34,7 +32,7 @@ const replyTextSpan = document.getElementById('reply-text');
 const cancelReplyButton = document.getElementById('cancel-reply');
 
 let currentSwipedElement = null; 
-let messageToReactTo = null; // NOUVEAU: ID du message pour les réactions
+let messageToReactTo = null; 
 
 
 // --- 1. Logique de Connexion et Statuts (Inchagée) ---
@@ -138,8 +136,14 @@ function initializeChat(user) {
     socket.on('history', function(messages) {
         messagesContainer.innerHTML = ''; 
         lastDisplayedDate = null; 
+        
+        // CORRIGÉ: S'assurer que le wrapper de frappe est là, mais invisible, pour la stabilisation
+        if (!messagesContainer.contains(typingBubbleWrapper)) {
+            messagesContainer.appendChild(typingBubbleWrapper);
+        }
+        typingBubbleWrapper.classList.add('hidden'); 
+
         messages.forEach(msg => {
-            // NOUVEAU: Passer les réactions à la fonction d'affichage
             addMessageToDOM(msg.message, msg.sender, true, msg.timestamp, msg.replyTo, msg.id, msg.reactions); 
         });
         scrollToBottom(); 
@@ -147,8 +151,8 @@ function initializeChat(user) {
 
     // Message reçu
     socket.on('chat message', function(data) {
-        typingIndicatorContainer.classList.add('hidden'); // MODIFIÉ
-        // NOUVEAU: Passer les réactions (qui est vide par défaut à l'envoi)
+        typingBubbleWrapper.classList.add('hidden');
+        
         addMessageToDOM(data.message, data.sender, false, data.timestamp, data.replyTo, data.id, data.reactions); 
         
         if (data.sender !== currentUser) {
@@ -156,22 +160,23 @@ function initializeChat(user) {
         }
     });
     
-    // Indicateur de frappe MODIFIÉ (Bulle Fantôme)
+    // Indicateur de frappe
     socket.on('typing', (sender) => {
         if (sender !== currentUser) {
-            typingIndicatorContainer.classList.remove('hidden');
+            typingBubbleWrapper.classList.remove('hidden');
+            scrollToBottom(); 
         }
     });
 
     socket.on('stop typing', (sender) => {
         if (sender !== currentUser) {
-            typingIndicatorContainer.classList.add('hidden');
+            typingBubbleWrapper.classList.add('hidden');
         }
     });
     
-    // NOUVEAU: Mise à jour des réactions
+    // Mise à jour des réactions
     socket.on('reaction updated', function(data) {
-        updateMessageReactions(data.messageId, data.reactions);
+        updateMessageReactions(data.messageId, data.reactions); 
     });
     
     // Statut en ligne
@@ -185,14 +190,12 @@ function initializeChat(user) {
         }
     });
     
-    // Écouteur de défilement pour le bouton "Retour en bas"
     messagesContainer.addEventListener('scroll', toggleScrollToBottomButton);
 }
 
 
 // --- 4. Logique de Réponse (Reply) (Inchagée) ---
 
-// Fonction pour initialiser la réponse (inclut la conversion d'ID)
 function setReplyContext(messageElement) {
     const sender = messageElement.getAttribute('data-sender');
     const text = messageElement.getAttribute('data-text');
@@ -214,13 +217,11 @@ function setReplyContext(messageElement) {
     messageInput.focus();
 }
 
-// Fonction pour annuler la réponse
 function clearReplyContext() {
     currentMessageToReply = null;
     replyBox.classList.add('hidden');
 }
 
-// Écouteur pour le bouton Annuler
 cancelReplyButton.addEventListener('click', clearReplyContext);
 
 
@@ -296,10 +297,32 @@ function formatSeparatorDate(isoString) {
     });
 }
 
-function addMessageToDOM(text, sender, isHistory = false, timestamp, replyTo = null, messageId = null, reactions = []) {
+function addDateSeparator(timestamp) {
+    const separatorContainer = document.createElement('div');
+    separatorContainer.classList.add('date-separator-container');
+
+    const separator = document.createElement('span');
+    separator.classList.add('date-separator');
+    separator.textContent = formatSeparatorDate(timestamp);
+    
+    separatorContainer.appendChild(separator);
+    messagesContainer.insertBefore(separatorContainer, typingBubbleWrapper);
+}
+
+function addSystemMessage(text) {
+    const sysMsg = document.createElement('p');
+    sysMsg.style.textAlign = 'center';
+    sysMsg.style.fontStyle = 'italic';
+    sysMsg.style.fontSize = '0.9em';
+    messagesContainer.insertBefore(sysMsg, typingBubbleWrapper);
+}
+
+// Logique de stabilisation du défilement et d'insertion de message (CORRIGÉ)
+const originalAddMessageToDOM = function(text, sender, isHistory = false, timestamp, replyTo = null, messageId = null, reactions = []) {
     const messageDate = new Date(timestamp);
     const dateString = messageDate.toDateString(); 
 
+    // Gérer le séparateur de date
     if (lastDisplayedDate !== dateString) {
         addDateSeparator(timestamp);
         lastDisplayedDate = dateString;
@@ -312,8 +335,8 @@ function addMessageToDOM(text, sender, isHistory = false, timestamp, replyTo = n
     
     messageDiv.setAttribute('data-sender', sender);
     messageDiv.setAttribute('data-text', text);
-    messageDiv.setAttribute('data-id', messageId || Date.now()); 
-    messageDiv.setAttribute('id', `msg-${messageId}`); // ID unique pour la gestion des réactions
+    messageDiv.setAttribute('data-id', messageId); 
+    messageDiv.setAttribute('id', `msg-${messageId}`); 
 
     if (replyTo && replyTo.sender && replyTo.text) {
         const replyBubble = document.createElement('div');
@@ -350,58 +373,56 @@ function addMessageToDOM(text, sender, isHistory = false, timestamp, replyTo = n
     textNode.style.margin = '5px 0 0 0';
     messageDiv.appendChild(textNode);
     
-    // NOUVEAU: Conteneur pour les réactions
+    // Conteneur pour les réactions
     const reactionsContainer = document.createElement('div');
     reactionsContainer.classList.add('reaction-container');
     reactionsContainer.setAttribute('id', `reactions-${messageId}`);
     messageDiv.appendChild(reactionsContainer);
     
-    // NOUVEAU: Ajouter l'écouteur pour le picker d'emoji
     addReactionPickerListener(messageDiv);
-    
-    // NOUVEAU: Afficher les réactions existantes
     renderReactions(messageId, reactions);
     
-    messagesContainer.appendChild(messageDiv);
+    // Insertion AVANT l'indicateur de frappe
+    messagesContainer.insertBefore(messageDiv, typingBubbleWrapper);
     
     addSwipeListeners(messageDiv);
     
     if (!isHistory) {
         scrollToBottom(); 
     }
-}
+};
 
-function addDateSeparator(timestamp) {
-    const separatorContainer = document.createElement('div');
-    separatorContainer.classList.add('date-separator-container');
-
-    const separator = document.createElement('span');
-    separator.classList.add('date-separator');
-    separator.textContent = formatSeparatorDate(timestamp);
+// Fonction wrapper pour la stabilisation du défilement (problème 1 résolu)
+function addMessageToDOM(text, sender, isHistory = false, timestamp, replyTo = null, messageId = null, reactions = []) {
+    let oldScrollHeight = 0;
     
-    separatorContainer.appendChild(separator);
-    messagesContainer.appendChild(separatorContainer);
+    // Si nous sommes au début de la liste (messagesContainer.scrollTop est proche de 0)
+    // ET que nous chargeons l'historique, nous devons stabiliser.
+    if (isHistory && messagesContainer.scrollTop < 50) { 
+        oldScrollHeight = messagesContainer.scrollHeight;
+        
+        // Appeler la fonction originale pour l'insertion
+        originalAddMessageToDOM(text, sender, isHistory, timestamp, replyTo, messageId, reactions);
+        
+        // Stabiliser la vue après l'insertion
+        const newScrollHeight = messagesContainer.scrollHeight;
+        messagesContainer.scrollTop = newScrollHeight - oldScrollHeight;
+    } else {
+        // Pour les nouveaux messages et le chargement d'historique loin du haut
+        originalAddMessageToDOM(text, sender, isHistory, timestamp, replyTo, messageId, reactions);
+    }
 }
 
-function addSystemMessage(text) {
-    const sysMsg = document.createElement('p');
-    sysMsg.style.textAlign = 'center';
-    sysMsg.style.fontStyle = 'italic';
-    sysMsg.style.fontSize = '0.9em';
-    sysMsg.textContent = text;
-    messagesContainer.appendChild(sysMsg);
-}
 
 // =======================================================
-// NOUVEAU: Logique d'affichage et de gestion des RÉACTIONS
+// Logique d'affichage et de gestion des RÉACTIONS (Problème 3 résolu)
 // =======================================================
 
-// Affiche le picker d'emoji au clic droit (ou clic long sur mobile)
 function addReactionPickerListener(element) {
     // Clic droit/Contexte Menu (Desktop)
     element.addEventListener('contextmenu', (e) => {
         e.preventDefault();
-        messageToReactTo = element.getAttribute('data-id');
+        messageToReactTo = element.getAttribute('data-id'); 
         showReactionPicker(e.clientX, e.clientY);
     });
 
@@ -412,7 +433,7 @@ function addReactionPickerListener(element) {
             e.preventDefault();
             messageToReactTo = element.getAttribute('data-id');
             showReactionPicker(e.touches[0].clientX, e.touches[0].clientY);
-        }, 500); // 500ms pour un clic long
+        }, 500); 
     });
     element.addEventListener('touchend', () => clearTimeout(touchTimer));
     element.addEventListener('touchmove', () => clearTimeout(touchTimer));
@@ -422,7 +443,6 @@ function addReactionPickerListener(element) {
         const bubble = e.target.closest('.reaction-bubble');
         if (bubble) {
             const emoji = bubble.getAttribute('data-emoji');
-            // Retirer uniquement si l'utilisateur a déjà mis cette réaction
             const isUserReaction = bubble.getAttribute('data-users').split(',').includes(currentUser);
             if (isUserReaction) {
                 socket.emit('toggle reaction', { 
@@ -430,7 +450,7 @@ function addReactionPickerListener(element) {
                     emoji: emoji, 
                     user: currentUser 
                 });
-                e.stopPropagation(); // Empêcher l'ouverture du picker
+                e.stopPropagation(); 
             }
         }
     });
@@ -438,11 +458,25 @@ function addReactionPickerListener(element) {
 
 function showReactionPicker(x, y) {
     reactionPicker.classList.remove('hidden');
-    // Positionner le picker près du curseur/doigt
-    reactionPicker.style.left = `${Math.min(x, messagesContainer.clientWidth - reactionPicker.offsetWidth - 20)}px`;
-    reactionPicker.style.top = `${y - reactionPicker.offsetHeight - 10}px`;
     
-    // Masquer le picker si l'utilisateur clique n'importe où ailleurs
+    // Adapter la position pour éviter que le picker ne sorte de l'écran
+    const pickerWidth = reactionPicker.offsetWidth;
+    const pickerHeight = reactionPicker.offsetHeight;
+    const containerRect = messagesContainer.getBoundingClientRect();
+
+    let finalX = x;
+    let finalY = y - pickerHeight - 10;
+    
+    if (finalX + pickerWidth > containerRect.right) {
+        finalX = containerRect.right - pickerWidth - 5;
+    }
+    if (finalY < containerRect.top) {
+        finalY = y + 10; // Si trop haut, afficher en dessous
+    }
+    
+    reactionPicker.style.left = `${finalX}px`;
+    reactionPicker.style.top = `${finalY}px`;
+    
     setTimeout(() => {
         document.addEventListener('click', hideReactionPicker, { once: true });
     }, 10);
@@ -451,6 +485,7 @@ function showReactionPicker(x, y) {
 function hideReactionPicker() {
     reactionPicker.classList.add('hidden');
     messageToReactTo = null;
+    document.removeEventListener('click', hideReactionPicker);
 }
 
 // Écouteurs pour les options d'emoji dans le picker
@@ -462,6 +497,7 @@ document.querySelectorAll('.emoji-option').forEach(option => {
                 emoji: e.target.getAttribute('data-emoji'), 
                 user: currentUser 
             });
+            hideReactionPicker();
         }
     });
 });
@@ -480,22 +516,27 @@ function renderReactions(messageId, allReactions) {
         return acc;
     }, {});
     
-    // 2. Vider le conteneur
     container.innerHTML = '';
 
-    // 3. Afficher les bulles agrégées
+    // 2. Afficher les bulles agrégées
     Object.entries(aggregated).forEach(([emoji, data]) => {
         const bubble = document.createElement('span');
         bubble.classList.add('reaction-bubble');
         bubble.setAttribute('data-emoji', emoji);
-        bubble.setAttribute('data-users', data.users.join(',')); // Pour le retrait au clic
+        bubble.setAttribute('data-users', data.users.join(','));
         
         let borderClass = '';
         
-        if (data.users.length === 1) {
-            borderClass = data.users[0] === 'Eric' ? 'reaction-border-Eric' : 'reaction-border-Olga';
-        } else if (data.users.length > 1) {
+        const hasEric = data.users.includes('Eric');
+        const hasOlga = data.users.includes('Olga');
+        
+        // Logique de couleur de bordure personnalisée
+        if (hasEric && hasOlga) {
             borderClass = 'reaction-border-Both';
+        } else if (hasEric) {
+            borderClass = 'reaction-border-Eric';
+        } else if (hasOlga) {
+            borderClass = 'reaction-border-Olga';
         }
         
         bubble.classList.add(borderClass);
@@ -564,75 +605,46 @@ function handleTouchMove(e) {
 }
 
 function handleTouchEnd(e) {
-    // Nettoyage des écouteurs
     document.removeEventListener('touchmove', handleTouchMove);
     document.removeEventListener('mousemove', handleTouchMove);
     document.removeEventListener('touchend', handleTouchEnd);
     document.removeEventListener('mouseup', handleTouchEnd);
     document.body.style.overflowX = ''; 
 
-    // Ramener le message à sa position d'origine (visuel)
     if (currentSwipedElement) {
         currentSwipedElement.style.transform = `translateX(0px)`;
     }
 
-    // Si un glissement suffisant a été détecté
     if (isSwiping && currentSwipedElement) {
         setReplyContext(currentSwipedElement);
     }
     
-    // Réinitialisation
     startX = 0;
     isSwiping = false;
     currentSwipedElement = null; 
 }
 
+
 // =======================================================
-// NOUVEAU: Logique de DÉFILEMENT (Stabilisation & Bouton)
+// Logique de DÉFILEMENT et Bouton (Problèmes 1 & 2 résolus)
 // =======================================================
 
 function scrollToBottom() {
-    // Utiliser le défilement doux pour le nouveau message
     messagesContainer.scrollTo({
         top: messagesContainer.scrollHeight,
         behavior: 'smooth'
     });
 }
 
-// Logique de stabilisation du défilement pour le chargement de l'historique
-const originalAddMessageToDOM = addMessageToDOM; 
-
-addMessageToDOM = function(text, sender, isHistory = false, timestamp, replyTo = null, messageId = null, reactions = []) {
-    let oldScrollHeight = 0;
-    let shouldStabilize = false;
-    
-    if (isHistory && messagesContainer.scrollTop < 50) {
-        // Enregistrer la hauteur AVANT d'insérer l'historique
-        oldScrollHeight = messagesContainer.scrollHeight;
-        shouldStabilize = true;
-    }
-    
-    // Exécuter l'ancienne fonction pour insérer le message dans le DOM
-    originalAddMessageToDOM(text, sender, isHistory, timestamp, replyTo, messageId, reactions);
-    
-    if (shouldStabilize) {
-        // Calculer la nouvelle hauteur
-        const newScrollHeight = messagesContainer.scrollHeight;
-        // Déplacer le défilement de la différence de hauteur
-        messagesContainer.scrollTop = newScrollHeight - oldScrollHeight;
-    }
-};
-
-// Logique pour afficher/masquer le bouton "Retour en bas"
 function toggleScrollToBottomButton() {
     const maxScroll = messagesContainer.scrollHeight - messagesContainer.clientHeight;
-    // Si l'utilisateur est loin du bas (ex: plus de 300px)
-    if (messagesContainer.scrollTop < maxScroll - 300) {
+    
+    // Afficher si l'utilisateur est loin du bas (plus de 100 pixels du fond)
+    if (messagesContainer.scrollTop < maxScroll - 100) {
         scrollToBottomButton.classList.remove('hidden');
     } else {
         scrollToBottomButton.classList.add('hidden');
     }
 }
 
-// Écouteur pour le bouton "Retour en bas"
 scrollToBottomButton.addEventListener('click', scrollToBottom);
