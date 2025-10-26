@@ -10,20 +10,18 @@ const chatInterfaceDiv = document.getElementById('chat-interface');
 
 const globalConnectionIndicator = document.getElementById('global-connection-indicator');
 const otherUserStatusDot = document.getElementById('other-user-status-dot'); 
-
-// NOUVEAU: Éléments DOM pour les nouvelles fonctionnalités
-const typingBubbleWrapper = document.getElementById('typing-bubble-wrapper'); 
-const reactionPicker = document.getElementById('reaction-picker'); 
-const scrollToBottomButton = document.getElementById('scroll-to-bottom-button'); 
+const typingIndicator = document.getElementById('typing-indicator');
 
 let socket; 
 let typingTimeout;
 const TYPING_TIMER_LENGTH = 1500; 
 let lastDisplayedDate = null; 
 
+// Variables pour la gestion des notifications et du titre
 let originalTitle = document.title;
 let notificationInterval = null;
 
+// Variables et DOM pour la réponse par glissement (Correction des variables globales)
 let isSwiping = false;
 let startX = 0;
 let currentMessageToReply = null; 
@@ -32,55 +30,8 @@ const replySenderSpan = document.getElementById('reply-sender');
 const replyTextSpan = document.getElementById('reply-text');
 const cancelReplyButton = document.getElementById('cancel-reply');
 
+// NOUVEAU: Variable pour stocker l'élément en cours de glissement
 let currentSwipedElement = null; 
-let messageToReactTo = null; 
-
-
-// =======================================================
-// AJOUT CRITIQUE : FONCTIONS UTILITAIRES MANQUANTES
-// =======================================================
-
-function formatTimestamp(date) {
-    const d = new Date(date);
-    const hours = d.getHours().toString().padStart(2, '0');
-    const minutes = d.getMinutes().toString().padStart(2, '0');
-    return `${hours}:${minutes}`;
-}
-
-function addDateSeparator(timestamp) {
-    const date = new Date(timestamp);
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const dateText = date.toLocaleDateString('fr-FR', options);
-    
-    const separatorContainer = document.createElement('div');
-    separatorContainer.classList.add('date-separator-container');
-    separatorContainer.innerHTML = `<span class="date-separator">${dateText}</span>`;
-    
-    // Insertion AVANT l'indicateur de frappe
-    messagesContainer.insertBefore(separatorContainer, typingBubbleWrapper);
-}
-
-function addSystemMessage(text) {
-    const messageDiv = document.createElement('div');
-    messageDiv.classList.add('message', 'sender-system');
-    messageDiv.style.textAlign = 'center';
-    messageDiv.style.padding = '5px';
-    messageDiv.style.fontSize = '0.9em';
-    messageDiv.style.color = '#777';
-    messageDiv.style.backgroundColor = 'transparent';
-    messageDiv.style.margin = '5px auto';
-    messageDiv.style.maxWidth = '90%';
-
-    const textNode = document.createElement('p');
-    textNode.textContent = text;
-    textNode.style.margin = '0';
-    messageDiv.appendChild(textNode);
-
-    // Insertion AVANT l'indicateur de frappe
-    messagesContainer.insertBefore(messageDiv, typingBubbleWrapper);
-    scrollToBottom(true);
-}
-// =======================================================
 
 
 // --- 1. Logique de Connexion et Statuts ---
@@ -110,6 +61,43 @@ function updateOtherUserStatus(isOnline) {
     otherUserStatusDot.classList.add(isOnline ? 'green' : 'red');
 }
 
+// --- 2. Logique de Notification (Titre d'Onglet) ---
+
+function startNotification(sender) {
+    if (document.visibilityState === 'visible') return;
+    if (notificationInterval) return; 
+    
+    originalTitle = document.title;
+    let isNotifying = false;
+    
+    notificationInterval = setInterval(() => {
+        document.title = isNotifying ? originalTitle : `(${sender} a écrit...) - ${originalTitle}`;
+        isNotifying = !isNotifying;
+    }, 1000); 
+}
+
+function stopNotification() {
+    if (notificationInterval) {
+        clearInterval(notificationInterval);
+        notificationInterval = null;
+        document.title = originalTitle;
+    }
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        stopNotification();
+    }
+});
+
+window.addEventListener('offline', () => {
+    updateGlobalStatus('red'); 
+});
+window.addEventListener('online', () => {
+    updateGlobalStatus('orange'); 
+});
+
+
 // --- 3. Initialisation et Logique Socket.IO ---
 
 document.getElementById('select-Olga').addEventListener('click', () => initializeChat('Olga'));
@@ -131,8 +119,8 @@ function initializeChat(user) {
     // Connexion
     socket.on('connect', () => {
         updateGlobalStatus('green'); 
+        stopNotification(); 
         messagesContainer.innerHTML = ''; 
-        // L'appel à addSystemMessage est désormais sécurisé
         addSystemMessage(`Yoooooooo ${currentUser}, wait ça charge.`);
         socket.emit('user joined', currentUser); 
     });
@@ -147,25 +135,16 @@ function initializeChat(user) {
     socket.on('history', function(messages) {
         messagesContainer.innerHTML = ''; 
         lastDisplayedDate = null; 
-        
-        // S'assurer que le wrapper de frappe est dans le DOM mais invisible (au fond)
-        if (typingBubbleWrapper && !messagesContainer.contains(typingBubbleWrapper)) {
-            messagesContainer.appendChild(typingBubbleWrapper);
-        }
-        if (typingBubbleWrapper) {
-            typingBubbleWrapper.classList.add('hidden'); 
-        }
-
         messages.forEach(msg => {
-            // L'appel à addMessageToDOM est désormais sécurisé
-            addMessageToDOM(msg.message, msg.sender, true, msg.timestamp, msg.replyTo, msg.id, msg.reactions || []); 
+            addMessageToDOM(msg.message, msg.sender, true, msg.timestamp, msg.replyTo, msg.id); 
         });
+        scrollToBottom(); 
     });
 
     // Message reçu
     socket.on('chat message', function(data) {
-        if (typingBubbleWrapper) typingBubbleWrapper.classList.add('hidden');
-        addMessageToDOM(data.message, data.sender, false, data.timestamp, data.replyTo, data.id, data.reactions || []); 
+        typingIndicator.classList.add('hidden');
+        addMessageToDOM(data.message, data.sender, false, data.timestamp, data.replyTo, data.id);
         
         if (data.sender !== currentUser) {
              startNotification(data.sender);
@@ -174,21 +153,16 @@ function initializeChat(user) {
     
     // Indicateur de frappe
     socket.on('typing', (sender) => {
-        if (sender !== currentUser && typingBubbleWrapper) {
-            typingBubbleWrapper.classList.remove('hidden');
-            scrollToBottom(true); 
+        if (sender !== currentUser) {
+            typingIndicator.textContent = `${sender} est en train d'écrire...`;
+            typingIndicator.classList.remove('hidden');
         }
     });
 
     socket.on('stop typing', (sender) => {
-        if (sender !== currentUser && typingBubbleWrapper) {
-            typingBubbleWrapper.classList.add('hidden');
+        if (sender !== currentUser) {
+            typingIndicator.classList.add('hidden');
         }
-    });
-    
-    // Mise à jour des réactions
-    socket.on('reaction updated', function(data) {
-        updateMessageReactions(data.messageId, data.reactions); 
     });
     
     // Statut en ligne
@@ -201,19 +175,18 @@ function initializeChat(user) {
             updateOtherUserStatus(false);
         }
     });
-    
-    // Écouteur pour le bouton de défilement
-    messagesContainer.addEventListener('scroll', toggleScrollToBottomButton);
 }
 
 
 // --- 4. Logique de Réponse (Reply) ---
 
+// Fonction pour initialiser la réponse (inclut la conversion d'ID)
 function setReplyContext(messageElement) {
     const sender = messageElement.getAttribute('data-sender');
     const text = messageElement.getAttribute('data-text');
     const id = messageElement.getAttribute('data-id');
 
+    // Conversion explicite de l'ID en entier pour le serveur PostgreSQL
     const replyId = parseInt(id); 
 
     if (isNaN(replyId) || replyId <= 0) {
@@ -230,11 +203,13 @@ function setReplyContext(messageElement) {
     messageInput.focus();
 }
 
+// Fonction pour annuler la réponse
 function clearReplyContext() {
     currentMessageToReply = null;
     replyBox.classList.add('hidden');
 }
 
+// Écouteur pour le bouton Annuler
 cancelReplyButton.addEventListener('click', clearReplyContext);
 
 
@@ -279,20 +254,41 @@ messageInput.addEventListener('input', () => {
 });
 
 
-// --- 6. Fonctions d'Affichage dans le DOM et DÉFILEMENT STABLE ---
+// --- 6. Fonctions d'Affichage dans le DOM ---
 
-function addMessageToDOM(text, sender, isHistory = false, timestamp, replyTo = null, messageId = null, reactions = []) {
-    let oldScrollHeight = 0;
+function autoLink(text) {
+    const urlRegex = /(\b(https?:\/\/[^\s]+|www\.[^\s]+))/g;
     
-    // Logique de stabilisation pour l'historique
-    if (isHistory && messagesContainer.scrollTop < 50 && messagesContainer.scrollHeight > messagesContainer.clientHeight) { 
-        oldScrollHeight = messagesContainer.scrollHeight;
-    }
+    return text.replace(urlRegex, function(url) {
+        let fullUrl = url;
+        if (!url.match(/^https?:\/\//i)) {
+            fullUrl = 'http://' + url;
+        }
+        return '<a href="' + fullUrl + '" target="_blank" rel="noopener noreferrer">' + url + '</a>';
+    });
+}
 
+function formatTimestamp(isoString) {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+}
+
+function formatSeparatorDate(isoString) {
+    const date = new Date(isoString);
+    return date.toLocaleDateString('fr-FR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+}
+
+function addMessageToDOM(text, sender, isHistory = false, timestamp, replyTo = null, messageId = null) {
     const messageDate = new Date(timestamp);
     const dateString = messageDate.toDateString(); 
 
-    // Gérer le séparateur de date (fonction maintenant définie)
     if (lastDisplayedDate !== dateString) {
         addDateSeparator(timestamp);
         lastDisplayedDate = dateString;
@@ -305,8 +301,7 @@ function addMessageToDOM(text, sender, isHistory = false, timestamp, replyTo = n
     
     messageDiv.setAttribute('data-sender', sender);
     messageDiv.setAttribute('data-text', text);
-    messageDiv.setAttribute('data-id', messageId); 
-    messageDiv.setAttribute('id', `msg-${messageId}`); 
+    messageDiv.setAttribute('data-id', messageId || Date.now()); 
 
     if (replyTo && replyTo.sender && replyTo.text) {
         const replyBubble = document.createElement('div');
@@ -330,7 +325,6 @@ function addMessageToDOM(text, sender, isHistory = false, timestamp, replyTo = n
     const timeSpan = document.createElement('span');
     timeSpan.classList.add('message-time');
     const timeToDisplay = timestamp || new Date(); 
-    // L'appel à formatTimestamp est maintenant sécurisé
     timeSpan.textContent = formatTimestamp(timeToDisplay); 
     
     headerDiv.appendChild(senderSpan);
@@ -339,198 +333,116 @@ function addMessageToDOM(text, sender, isHistory = false, timestamp, replyTo = n
     messageDiv.appendChild(headerDiv);
     
     const textNode = document.createElement('p');
-    textNode.innerHTML = text;
+    textNode.innerHTML = autoLink(text);
     
     textNode.style.margin = '5px 0 0 0';
     messageDiv.appendChild(textNode);
     
-    // Conteneur pour les réactions
-    const reactionsContainer = document.createElement('div');
-    reactionsContainer.classList.add('reaction-container');
-    reactionsContainer.setAttribute('id', `reactions-${messageId}`);
-    messageDiv.appendChild(reactionsContainer);
-    
-    // Insertion AVANT l'indicateur de frappe (vérifie si l'élément existe)
-    if (typingBubbleWrapper) {
-        messagesContainer.insertBefore(messageDiv, typingBubbleWrapper);
-    } else {
-        messagesContainer.appendChild(messageDiv);
-    }
-    
-    addReactionPickerListener(messageDiv);
-    renderReactions(messageId, reactions);
+    messagesContainer.appendChild(messageDiv);
     
     addSwipeListeners(messageDiv);
-
-    // Application de la stabilisation du défilement
-    if (isHistory && oldScrollHeight > 0) {
-        const newScrollHeight = messagesContainer.scrollHeight;
-        messagesContainer.scrollTop = newScrollHeight - oldScrollHeight;
-    } else if (!isHistory) {
-        scrollToBottom(true); 
+    
+    if (!isHistory) {
+        scrollToBottom(); 
     }
 }
 
+function addDateSeparator(timestamp) {
+    const separatorContainer = document.createElement('div');
+    separatorContainer.classList.add('date-separator-container');
 
-// =======================================================
-// Logique d'affichage et de gestion des RÉACTIONS
-// (Fonctions inchangées mais incluses pour la complétude)
-// =======================================================
+    const separator = document.createElement('span');
+    separator.classList.add('date-separator');
+    separator.textContent = formatSeparatorDate(timestamp);
+    
+    separatorContainer.appendChild(separator);
+    messagesContainer.appendChild(separatorContainer);
+}
 
-function addReactionPickerListener(element) {
-    element.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-        messageToReactTo = element.getAttribute('data-id'); 
-        showReactionPicker(e.clientX, e.clientY);
-    });
+function addSystemMessage(text) {
+    const sysMsg = document.createElement('p');
+    sysMsg.style.textAlign = 'center';
+    sysMsg.style.fontStyle = 'italic';
+    sysMsg.style.fontSize = '0.9em';
+    sysMsg.textContent = text;
+    messagesContainer.appendChild(sysMsg);
+}
 
-    let touchTimer;
-    element.addEventListener('touchstart', (e) => {
-        touchTimer = setTimeout(() => {
+
+// --- 7. Fonctions de gestion du SWIPE (glissement CORRIGÉ) ---
+
+function addSwipeListeners(element) {
+    element.addEventListener('touchstart', handleTouchStart);
+    element.addEventListener('mousedown', handleTouchStart);
+}
+
+function handleTouchStart(e) {
+    if (e.type === 'mousedown' && e.button !== 0) return; 
+
+    // Définir l'élément actuel à l'élément sur lequel l'événement a démarré
+    currentSwipedElement = this; 
+
+    if (e.type === 'mousedown') {
+        document.body.style.overflowX = 'hidden'; 
+    }
+    
+    const eventClientX = e.touches ? e.touches[0].clientX : e.clientX;
+    
+    startX = eventClientX;
+    isSwiping = false; 
+
+    document.addEventListener('touchmove', handleTouchMove);
+    document.addEventListener('mousemove', handleTouchMove);
+    document.addEventListener('touchend', handleTouchEnd);
+    document.addEventListener('mouseup', handleTouchEnd);
+}
+
+function handleTouchMove(e) {
+    if (startX === 0 || !currentSwipedElement) return; 
+
+    const eventClientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const diffX = eventClientX - startX;
+    
+    if (diffX > 20) {
+        isSwiping = true;
+        
+        const swipeDistance = Math.min(60, diffX);
+        currentSwipedElement.style.transform = `translateX(${swipeDistance}px)`;
+        
+        if (e.type === 'touchmove') {
+            // Empêcher le défilement vertical lors du glissement horizontal
             e.preventDefault(); 
-            messageToReactTo = element.getAttribute('data-id');
-            showReactionPicker(e.touches[0].clientX, e.touches[0].clientY);
-        }, 500); 
-    });
-    element.addEventListener('touchend', () => clearTimeout(touchTimer));
-    element.addEventListener('touchmove', () => clearTimeout(touchTimer));
-    
-    element.querySelector('.reaction-container').addEventListener('click', (e) => {
-        const bubble = e.target.closest('.reaction-bubble');
-        if (bubble) {
-            const emoji = bubble.getAttribute('data-emoji');
-            const isUserReaction = bubble.getAttribute('data-users').split(',').includes(currentUser);
-            if (isUserReaction) {
-                socket.emit('toggle reaction', { 
-                    messageId: element.getAttribute('data-id'), 
-                    emoji: emoji, 
-                    user: currentUser 
-                });
-                e.stopPropagation(); 
-            }
         }
-    });
-}
-
-function showReactionPicker(x, y) {
-    reactionPicker.classList.remove('hidden');
-    
-    const pickerWidth = reactionPicker.offsetWidth;
-    const pickerHeight = reactionPicker.offsetHeight;
-    const containerRect = messagesContainer.getBoundingClientRect();
-
-    let finalX = x;
-    let finalY = y - pickerHeight - 10;
-    
-    if (finalX + pickerWidth > containerRect.right) {
-        finalX = containerRect.right - pickerWidth - 5;
-    }
-    if (finalY < containerRect.top) {
-        finalY = y + 10;
-    }
-    
-    reactionPicker.style.left = `${finalX}px`;
-    reactionPicker.style.top = `${finalY}px`;
-    
-    setTimeout(() => {
-        document.addEventListener('click', hideReactionPicker, { once: true });
-    }, 10);
-}
-
-function hideReactionPicker() {
-    reactionPicker.classList.add('hidden');
-    messageToReactTo = null;
-    document.removeEventListener('click', hideReactionPicker);
-}
-
-document.querySelectorAll('.emoji-option').forEach(option => {
-    option.addEventListener('click', (e) => {
-        if (messageToReactTo && currentUser) {
-            socket.emit('toggle reaction', { 
-                messageId: messageToReactTo, 
-                emoji: e.target.getAttribute('data-emoji'), 
-                user: currentUser 
-            });
-            hideReactionPicker();
-        }
-    });
-});
-
-function renderReactions(messageId, allReactions) {
-    const container = document.getElementById(`reactions-${messageId}`);
-    if (!container) return;
-
-    const aggregated = allReactions.reduce((acc, reaction) => {
-        if (!acc[reaction.emoji]) {
-            acc[reaction.emoji] = { count: 0, users: [] };
-        }
-        acc[reaction.emoji].count += 1;
-        if (!acc[reaction.emoji].users.includes(reaction.user)) {
-            acc[reaction.emoji].users.push(reaction.user);
-        }
-        return acc;
-    }, {});
-    
-    container.innerHTML = '';
-
-    Object.entries(aggregated).forEach(([emoji, data]) => {
-        const bubble = document.createElement('span');
-        bubble.classList.add('reaction-bubble');
-        bubble.setAttribute('data-emoji', emoji);
-        bubble.setAttribute('data-users', data.users.join(','));
-        
-        let borderClass = '';
-        const hasEric = data.users.includes('Eric');
-        const hasOlga = data.users.includes('Olga');
-        
-        if (hasEric && hasOlga) {
-            borderClass = 'reaction-border-Both';
-        } else if (hasEric) {
-            borderClass = 'reaction-border-Eric';
-        } else if (hasOlga) {
-            borderClass = 'reaction-border-Olga';
-        }
-        
-        bubble.classList.add(borderClass);
-        
-        let content = emoji;
-        if (data.count > 1) {
-            content += `<span class="reaction-count">${data.count}</span>`;
-        }
-        
-        bubble.innerHTML = content;
-        container.appendChild(bubble);
-    });
-}
-
-function updateMessageReactions(messageId, reactions) {
-    renderReactions(messageId, reactions);
-}
-
-
-// --- 8. Fonctions de DÉFILEMENT (Stabilisation + Bouton) ---
-
-function scrollToBottom(smooth = true) {
-    if (messagesContainer.classList.contains('hidden')) return; 
-
-    messagesContainer.scrollTo({
-        top: messagesContainer.scrollHeight,
-        behavior: smooth ? 'smooth' : 'auto'
-    });
-}
-
-function toggleScrollToBottomButton() {
-    const maxScroll = messagesContainer.scrollHeight - messagesContainer.clientHeight;
-    const scrollTolerance = 100;
-
-    if (messagesContainer.scrollTop < maxScroll - scrollTolerance) {
-        scrollToBottomButton.classList.remove('hidden');
-    } else {
-        scrollToBottomButton.classList.add('hidden');
+    } else if (diffX < 0 && isSwiping) {
+        currentSwipedElement.style.transform = `translateX(0px)`;
+        isSwiping = false;
     }
 }
 
-scrollToBottomButton.addEventListener('click', () => scrollToBottom(true));
+function handleTouchEnd(e) {
+    // Nettoyage des écouteurs
+    document.removeEventListener('touchmove', handleTouchMove);
+    document.removeEventListener('mousemove', handleTouchMove);
+    document.removeEventListener('touchend', handleTouchEnd);
+    document.removeEventListener('mouseup', handleTouchEnd);
+    document.body.style.overflowX = ''; 
 
-// Ajoutez ici vos fonctions de glissement (swipe) pour la réponse si elles n'y sont plus
-// ... [Les fonctions addSwipeListeners, handleTouchStart, handleTouchMove, handleTouchEnd doivent être incluses ici]
+    // Ramener le message à sa position d'origine (visuel)
+    if (currentSwipedElement) {
+        currentSwipedElement.style.transform = `translateX(0px)`;
+    }
+
+    // Si un glissement suffisant a été détecté
+    if (isSwiping && currentSwipedElement) {
+        setReplyContext(currentSwipedElement);
+    }
+    
+    // Réinitialisation
+    startX = 0;
+    isSwiping = false;
+    currentSwipedElement = null; 
+}
+
+function scrollToBottom() {
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
