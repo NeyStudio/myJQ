@@ -18,7 +18,7 @@ body {
     height: 100%; 
     display: flex; 
     flex-direction: column;
-    position: relative; /* Nécessaire pour positionner le bouton de défilement */
+    position: relative; 
 }
 
 /* Sélection utilisateur */
@@ -60,6 +60,9 @@ body {
     font-weight: bold;
     min-height: 30px; 
     flex-shrink: 0;
+}
+#header-title {
+    margin-right: auto; 
 }
 
 /* Groupement des points de statut */
@@ -120,33 +123,37 @@ body {
 }
 
 /* En-têtes et heure du message */
-.message-sender {
-    font-weight: bold;
-    font-size: 0.9em;
-    margin-right: 10px;
+.message-sender { 
+    font-weight: bold; 
+    font-size: 0.8em; 
+    display: block; 
+    margin-bottom: 2px; 
+    margin-right: 10px; 
 }
 .message-time {
     font-size: 0.7em;
-    color: #777;
+    color: #666; 
+    opacity: 0.8; 
+    margin-left: auto; 
     white-space: nowrap;
 }
 
 /* Séparateur de date */
 .date-separator-container {
+    width: 100%;
     text-align: center;
-    margin: 15px 0;
-    width: 100%; 
+    margin: 15px 0 10px 0;
 }
 .date-separator {
-    display: inline-block;
-    background-color: rgba(255, 255, 255, 0.5); 
+    background-color: rgba(255, 255, 255, 0.5);
     color: #444;
-    font-size: 0.8em;
-    padding: 5px 12px;
-    border-radius: 15px;
+    font-size: 0.75em;
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-weight: 500;
+    display: inline-block;
     backdrop-filter: blur(3px);
     -webkit-backdrop-filter: blur(3px);
-    font-weight: bold;
 }
 
 /* Style pour le message de citation (reply) */
@@ -159,9 +166,14 @@ body {
     font-size: 0.8em;
     opacity: 0.8;
 }
+.message-reply-sender {
+    font-weight: bold;
+    display: block;
+    color: #444;
+}
 
 /* ================================================= */
-/* Indicateur de frappe (Typing Bubble) */
+/* Indicateur de frappe (Bulle Animée) */
 /* ================================================= */
 
 /* Conteneur pour que la bulle de frappe soit dans le flux normal */
@@ -174,7 +186,6 @@ body {
     padding: 10px 15px;
     max-width: 150px;
     border: none;
-    /* Utilise sender-other pour le style de bulle de l'autre */
 }
 .dot-container {
     display: flex;
@@ -198,9 +209,8 @@ body {
     100% { transform: scale(1); opacity: 1; }
 }
 
-/* ================================================= */
-/* Section de réponse (Reply Box) */
-/* ================================================= */
+
+/* Styles de la boîte de réponse au-dessus du formulaire */
 #reply-box {
     display: flex;
     justify-content: space-between;
@@ -246,16 +256,14 @@ body {
     color: #f44336;
 }
 
-/* ================================================= */
 /* Formulaire de saisie */
-/* ================================================= */
 #message-form { 
     display: flex; 
     gap: 10px; 
     padding: 9px 12px;
     border-top: 1px solid #ddd;
     background-color: #f7f7f7;
-    flex-shrink: 0;
+    flex-shrink: 0; 
 }
 #message-input { 
     flex-grow: 1; 
@@ -264,7 +272,7 @@ body {
     border-radius: 20px; 
     font-size: 1em; 
 }
-#send-button { 
+#message-form button {
     background-color: #274939; 
     color: white; 
     border: none; 
@@ -274,8 +282,9 @@ body {
     font-weight: bold;
     transition: background-color 0.2s;
     flex-shrink: 0; 
+    min-width: unset;
 }
-#send-button:hover { 
+#message-form button:hover { 
     background-color: #4CAF50; 
 }
 
@@ -304,7 +313,6 @@ body {
     margin-left: 5px;
     border-radius: 20px;
     font-size: 0.9em;
-    /* Effet de glace pour plus d'attrait */
     background-color: rgba(255, 255, 255, 0.4); 
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
@@ -321,7 +329,7 @@ body {
     color: #333;
 }
 
-/* Couleurs des bordures (problème 3 résolu) */
+/* Couleurs des bordures (Bicolore) */
 .reaction-border-Eric { border-color: #AEC6E4; } 
 .reaction-border-Olga { border-color: #FBC4D4; } 
 
@@ -352,7 +360,7 @@ body {
 }
 
 /* ================================================= */
-/* Bouton "Retour en bas" (Discret et Attrayant - problème 2 résolu) */
+/* Bouton "Retour en bas" (Discret) */
 /* ================================================= */
 #scroll-to-bottom-button {
     position: absolute;
@@ -361,7 +369,6 @@ body {
     width: 35px; 
     height: 35px;
     border-radius: 50%;
-    /* Rendu discret avec effet de glace */
     background-color: rgba(255, 255, 255, 0.4); 
     color: #274939;
     border: 1px solid rgba(39, 73, 57, 0.2);
@@ -374,11 +381,15 @@ body {
     -webkit-backdrop-filter: blur(5px);
     padding: 0;
     min-width: 35px;
+    display: flex; 
+    justify-content: center;
+    align-items: center;
 }
 #scroll-to-bottom-button:hover {
     background-color: rgba(255, 255, 255, 0.8);
     transform: scale(1.1);
 }
+
 .hidden { 
     display: none !important; 
 }
