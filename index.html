@@ -1,181 +1,240 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pour Olga</title>
-    <style>
-        :root {
-            --primary: #ff4757;
-            --bg: #ffeef0;
-            --text: #2f3542;
-            --card-bg: #ffffff;
-            --shadow: rgba(0,0,0,0.05);
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-        }
-        .card {
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px var(--shadow);
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-        }
-        h1 {
-            color: var(--primary);
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-        p {
-            font-size: 16px;
-            line-height: 1.5;
-            margin-bottom: 25px;
-        }
-        .btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 14px 20px;
-            border-radius: 25px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            width: 100%;
-            transition: transform 0.2s, background 0.2s;
-        }
-        .btn:hover {
-            transform: scale(1.02);
-        }
-        .hidden {
-            display: none;
-        }
-        .options {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .heart {
-            font-size: 40px;
-            color: var(--primary);
-            margin-bottom: 10px;
-            animation: beat 1s infinite alternate;
-        }
-        @keyframes beat {
-            to { transform: scale(1.1); }
-        }
-    </style>
-</head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>JournalyQuest - Votre Aventure Quotidienne</title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" href="style.css">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+    <meta name="theme-color" content="#3498db">
+
+    </head>
+
 <body>
+    <div id="splash-screen" class="splash-screen">
+        <img src="logo.png" alt="JournalyQuest Logo" class="splash-logo">
+        <div class="splash-title">JournalyQuest</div>
+        <div class="splash-spinner"></div>
+    </div>
 
-    <div class="card game-card">
-        <!-- Ecran Accueil -->
-        <div class="screen-start">
-            <div class="heart">❤️</div>
-            <h1>Opération Réchauffement</h1>
-            <p>Un message spécial attend Olga. Lance ce test interactif immédiat.</p>
-            <button class="btn" onclick="nextScreen('screen-q1')">Démarrer</button>
-        </div>
-
-        <!-- Ecran Question 1 -->
-        <div class="screen-q1 hidden">
-            <h1>Question 1</h1>
-            <p>Quel diagnostic décrit notre météo actuelle ?</p>
-            <div class="options">
-                <button class="btn" onclick="selectOption(1, 'A')">Un hiver polaire imprévu</button>
-                <button class="btn" onclick="selectOption(1, 'B')">Une panne temporaire de réseau</button>
-                <button class="btn" onclick="selectOption(1, 'C')">Une jauge de bisous à plat</button>
+    <div id="app-container" class="app-container">
+        <header>
+            <div class="profile-area">
+                <div class="profile-picture-container" id="profile-picture-container">
+                    <img src="dem.png" alt="Photo de profil" id="profile-picture">
+                    <div class="level-badge" id="level-badge"><span>1</span></div>
+                </div>
+                <h2 id="user-name-display">Aventurier Anonyme</h2>
             </div>
-        </div>
-
-        <!-- Ecran Question 2 -->
-        <div class="screen-q2 hidden">
-            <h1>Question 2</h1>
-            <p>Choisis l'arme idéale pour briser la glace :</p>
-            <div class="options">
-                <button class="btn" onclick="selectOption(2, 'A')">Un appel vocal interminable</button>
-                <button class="btn" onclick="selectOption(2, 'B')">Un poème exclusif de ton homme</button>
-                <button class="btn" onclick="selectOption(2, 'C')">Un sourire partagé à distance</button>
+            <div class="xp-bar-container" id="xp-progress-container">
+                <div class="xp-progress-bar" id="xp-progress-bar"></div>
+                <span class="xp-text" id="xp-text">0 / 1000 XP</span>
             </div>
-        </div>
+        </header>
 
-        <!-- Ecran Resultat -->
-        <div class="screen-result hidden">
-            <div class="heart">💖</div>
-            <h1>Verdict du Thermomètre</h1>
-            <p class="result-text"></p>
-            <button class="btn" onclick="sendResult()">Terminer</button>
-        </div>
+        <main>
+            <section class="money-display">
+                <p>Pièces: <span id="coins-display">0</span></p>
+                <p>Gemmes: <span id="gems-display">0</span></p>
+            </section>
 
-        <!-- Ecran Fin -->
-        <div class="screen-thanks hidden">
-            <div class="heart">💝</div>
-            <h1>Merci Olga</h1>
-            <p>Les résultats sont envoyés. Ney prépare sa réponse.</p>
+            <section class="controls">
+                <button id="open-add-quest-modal-btn" class="main-button" style="max-width:30%";>Ajouter une Quête</button>
+                <button id="open-filters-modal-btn" class="main-button"style="max-width:30%";>Filtres & Tri</button>
+                <button id="open-shop-modal-btn" class="main-button"style="max-width:30%";>Boutique</button>
+            </section>
+
+            <section class="quest-list-section">
+                <h2>Mes Quêtes</h2>
+                <ul id="mesQuetes" class="quest-list">
+                    </ul>
+            </section>
+        </main>
+
+        <footer>
+            <div class="theme-switch-wrapper" >
+                <label class="theme-switch" for="checkbox" style="text-aling:center;">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+                <em>Thème Sombre</em>
+            </div>
+        </footer>
+    </div>
+
+    <div id="profile-modal" class="modal">
+        <div class="modal-content profile-modal-content">
+            <span class="close-button" id="close-profile-modal-btn">&times;</span>
+            <h2>Votre Profil</h2>
+            <div class="modal-profile-pic-area">
+                <img src="dem.png" alt="Photo de profil" id="modal-profile-picture" class="large-profile-pic">
+                <div style="display:flex; gap:10px"><label for="profile-picture-input" class="change-pic-btn">Changer la Photo</label>
+                <label for="profile-picture-delete" class="change-pic-btn">Supprimer la photo</label></div>
+                <input type="file" id="profile-picture-input" accept="image/*" style="display: none;">
+                <input type="text" id="profile-picture-delete" style="display: none;">
+            </div>
+            <div class="profile-info-item">
+                <label for="user-name-input" style="position:center;">Nom d'utilisateur:</label>
+                <input type="text" id="user-name-input" value="Aventurier Anonyme">
+            </div>
+            <p>Niveau: <span id="modal-level">1</span></p>
+            <p>XP: <span id="modal-xp">0</span></p>
+            <p>Pièces: <span id="modal-coins">0</span></p>
+            <p>Gemmes: <span id="modal-gems">0</span></p>
+            <button id="save-profile-btn" class="main-button">Sauvegarder le Profil</button>
         </div>
     </div>
 
+    <div id="quest-form-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-quest-form-modal-btn">&times;</span>
+            <h2 id="quest-form-title">Ajouter une Nouvelle Quête</h2>
+            <form id="add-quest-form">
+                <input type="hidden" id="hidden-quest-id">
+                <label for="quest-title">Titre de la Quête:</label>
+                <input type="text" id="quest-title" required>
+
+                <label for="quest-description">Description:</label>
+                <textarea id="quest-description" rows="3"></textarea>
+
+                <label for="quest-open-date">Date d'Ouverture:</label>
+                <input type="date" id="quest-open-date" required>
+
+                <label for="quest-close-date">Date de Fermeture:</label>
+                <input type="date" id="quest-close-date" required>
+
+                <label for="quest-difficulty">Difficulté:</label>
+                <select id="quest-difficulty" required>
+                    <option value="D">D (Facile)</option>
+                    <option value="C">C (Moyenne)</option>
+                    <option value="B">B (Difficile)</option>
+                    <option value="A">A (Très Difficile)</option>
+                    <option value="S">S (Légendaire)</option>
+                </select>
+
+                <label for="quest-category">Catégorie:</label>
+                <select id="quest-category">
+                    <option value="none">Aucune</option>
+                    <option value="studies">Études</option>
+                    <option value="sport">Sport</option>
+                    <option value="household">Ménage</option>
+                    <option value="personal">Personnel</option>
+                    <option value="work">Travail</option>
+                    <option value="health">Santé</option>
+                    <option value="hobby">Loisir</option>
+                    <option value="social">Social</option>
+                    <option value="finance">Finance</option>
+                    <option value="creative">Créativité</option>
+                </select>
+
+                <button type="submit" id="quest-form-submit-btn" class="main-button">Ajouter la Quête</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="filters-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-filters-modal-btn">&times;</span>
+            <h2>Filtres et Tri</h2>
+            <div class="filter-group">
+                <label for="filter-status">Statut:</label>
+                <select id="filter-status">
+                    <option value="all">Toutes</option>
+                    <option value="active">Actives</option>
+                    <option value="completed">Terminées</option>
+                    <option value="future">Futures</option>
+                    <option value="expired">Expirées</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filter-difficulty">Difficulté:</label>
+                <select id="filter-difficulty">
+                    <option value="all">Toutes</option>
+                    <option value="D">D</option>
+                    <option value="C">C</option>
+                    <option value="B">B</option>
+                    <option value="A">A</option>
+                    <option value="S">S</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filter-category">Catégorie:</label>
+                <select id="filter-category">
+                    <option value="all">Toutes</option>
+                    <option value="studies">Études</option>
+                    <option value="sport">Sport</option>
+                    <option value="household">Ménage</option>
+                    <option value="personal">Personnel</option>
+                    <option value="work">Travail</option>
+                    <option value="health">Santé</option>
+                    <option value="hobby">Loisir</option>
+                    <option value="social">Social</option>
+                    <option value="finance">Finance</option>
+                    <option value="creative">Créativité</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="sort-order">Trier par:</label>
+                <select id="sort-order">
+                    <option value="none">Aucun</option>
+                    <option value="difficulty-asc">Difficulté (Croissant)</option>
+                    <option value="difficulty-desc">Difficulté (Décroissant)</option>
+                    <option value="open-date-asc">Date d'Ouverture (Anciennes en premier)</option>
+                    <option value="open-date-desc">Date d'Ouverture (Récentes en premier)</option>
+                    <option value="close-date-asc">Date de Fermeture (Proches en premier)</option>
+                    <option value="close-date-desc">Date de Fermeture (Lointaines en premier)</option>
+                </select>
+            </div>
+            <div class="filter-actions">
+                <button id="apply-filters-btn" class="main-button">Appliquer les Filtres</button>
+                <button id="reset-filters-btn" class="secondary-button">Réinitialiser</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="shop-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-shop-modal-btn">&times;</span>
+            <h2>Boutique de l'Aventurier</h2>
+            <div class="shop-item">
+                <h3>Pack "100 pieces"</h3>
+                <p>Reçu: 100 pieces</p>
+                <p class="price">Prix: 1 Gemme</p>
+                <button class="buy-item-btn" data-item="euro">Acheter</button>
+            </div>
+            <div class="shop-item">
+                <h3>Pack "1 Gemme"</h3>
+                <p>Reçu: 1 Gemme</p>
+                <p class="price">Prix: 100 pieces</p>
+                <button class="buy-item-btn" data-item="plaisir">Acheter</button>
+            </div>
+        </div> </div>
+
+
+    <div id="custom-alert-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-alert-modal-btn">&times;</span>
+            <h2 id="custom-alert-title"></h2>
+            <p id="custom-alert-message"></p>
+            <button id="custom-alert-ok-btn" class="main-button">OK</button>
+        </div> </div>
     <script>
-        let choices = {};
-
-        function nextScreen(screenClass) {
-            document.querySelectorAll('.game-card > div').forEach(div => div.classList.add('hidden'));
-            document.querySelector('.' + screenClass).classList.remove('hidden');
-        }
-
-        function selectOption(questionNum, option) {
-            choices[questionNum] = option;
-            if (questionNum === 1) {
-                nextScreen('screen-q2');
-            } else if (questionNum === 2) {
-                showResult();
-            }
-        }
-
-        function showResult() {
-            const resultText = document.querySelector('.result-text');
-            let message = "";
-
-            if (choices[1] === 'C' || choices[2] === 'B') {
-                message = "Diagnostic validé. Olga mérite un océan de tendresse. Ney envoie immédiatement une cargaison d'amour vers le Cameroun pour réchauffer les cœurs.";
-            } else {
-                message = "Alerte grand froid. Une action corrective s'impose : envoie un message à Ney immédiatement pour réclamer ton câlin virtuel.";
-            }
-
-            resultText.innerText = message;
-            nextScreen('screen-result');
-        }
-
-        function sendResult() {
-            const resultText = document.querySelector('.result-text').innerText;
-            
-            fetch('https://formspree.io/f/xkolagwj', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    verdict: resultText,
-                    reponse_q1: choices[1],
-                    reponse_q2: choices[2]
-                })
-            })
-            .then(() => {
-                nextScreen('screen-thanks');
-            })
-            .catch(() => {
-                alert('Erreur de connexion. Réessaye.');
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker enregistré avec succès:', registration);
+                    })
+                    .catch(error => {
+                        console.error('Échec de l\'enregistrement du Service Worker:', error);
+                    });
             });
         }
     </script>
+    <script src="sc.js"></script>
+    <script src="notif.js"></script>
 </body>
+
 </html>
