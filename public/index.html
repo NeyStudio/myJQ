@@ -2,25 +2,27 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Chat Olga & Eric</title>
-    
     <link rel="stylesheet" href="style.css"> 
 </head>
 <body>
     <div id="chat-container">
         
-        <div id="user-selection">
-            <h1 style="text-align: center;">Lass uns schmecken</h1>
+        <!-- Écran de Sélection Initial -->
+        <div id="user-selection" class="user-selection-card">
+            <h1>Lass uns schmecken</h1>
             <p>Dis la vérité pour begin</p>
-            <button id="select-Olga">Je suis Olga</button>
-            <button id="select-Eric">Je suis Eric</button>
+            <div class="selection-buttons">
+                <button id="select-Olga" class="btn-user olga">Je suis Olga</button>
+                <button id="select-Eric" class="btn-user eric">Je suis Eric</button>
+            </div>
         </div>
 
+        <!-- Interface de Discussion -->
         <div id="chat-interface" class="hidden">
             <nav id="header-bar">
                 <span id="header-title">Lass uns schmecken</span>
-                
                 <div class="user-status-group">
                     <span id="global-connection-indicator" class="status-dot orange" title="Statut de la connexion"></span>
                     <span id="other-user-status-dot" class="status-dot red" title="Statut de l'autre utilisateur"></span>
@@ -31,6 +33,7 @@
             
             <p id="typing-indicator" class="hidden" aria-live="polite"></p>
             
+            <!-- Boîtier de Réponse dynamique -->
             <div id="reply-box" class="hidden">
                 <div class="reply-content">
                     <span id="reply-sender"></span>
