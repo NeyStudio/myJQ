@@ -3,179 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pour Olga</title>
-    <style>
-        :root {
-            --primary: #ff4757;
-            --bg: #ffeef0;
-            --text: #2f3542;
-            --card-bg: #ffffff;
-            --shadow: rgba(0,0,0,0.05);
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-        }
-        .card {
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px var(--shadow);
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-        }
-        h1 {
-            color: var(--primary);
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-        p {
-            font-size: 16px;
-            line-height: 1.5;
-            margin-bottom: 25px;
-        }
-        .btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 14px 20px;
-            border-radius: 25px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
+    <title>JournalyQuest</title>
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+    <meta name="theme-color" content="#3498db">
+    <link rel="stylesheet" href="style.css">
+        <style>
+        #lottie-wind-container {
+            position: absolute;
+            left: 90%;
+            bottom: 40%;
             width: 100%;
-            transition: transform 0.2s, background 0.2s;
+            z-index: 2;
+            transform: translateX(-100%);
+            opacity: 0;
+            animation: showLottieWind 2.5s ease-in-out forwards;
+            animation-delay: 0.3s;
+            animation: fade 2.6s;
         }
-        .btn:hover {
-            transform: scale(1.02);
-        }
-        .hidden {
-            display: none;
-        }
-        .options {
+
+        .content-container {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            animation: fadeInContent 1.30s ease-out forwards;
+            animation-delay: 1.7s; 
+            z-index: 1; 
         }
-        .heart {
-            font-size: 40px;
-            color: var(--primary);
-            margin-bottom: 10px;
-            animation: beat 1s infinite alternate;
+
+        @keyframes fadeInContent {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
         }
-        @keyframes beat {
-            to { transform: scale(1.1); }
+         @keyframes fade {
+            0% {
+                opacity: 1;
+            }
+            80%{
+              opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
         }
     </style>
-</head>
 <body>
-
-    <div class="card game-card">
-        <!-- Ecran Accueil -->
-        <div class="screen-start">
-            <div class="heart">❤️</div>
-            <h1>Opération Réchauffement</h1>
-            <p>Un message spécial attend Olga. Lance ce test interactif immédiat.</p>
-            <button class="btn" onclick="nextScreen('screen-q1')">Démarrer</button>
-        </div>
-
-        <!-- Ecran Question 1 -->
-        <div class="screen-q1 hidden">
-            <h1>Question 1</h1>
-            <p>Quel diagnostic décrit notre météo actuelle ?</p>
-            <div class="options">
-                <button class="btn" onclick="selectOption(1, 'A')">Un hiver polaire imprévu</button>
-                <button class="btn" onclick="selectOption(1, 'B')">Une panne temporaire de réseau</button>
-                <button class="btn" onclick="selectOption(1, 'C')">Une jauge de bisous à plat</button>
-            </div>
-        </div>
-
-        <!-- Ecran Question 2 -->
-        <div class="screen-q2 hidden">
-            <h1>Question 2</h1>
-            <p>Choisis l'arme idéale pour briser la glace :</p>
-            <div class="options">
-                <button class="btn" onclick="selectOption(2, 'A')">Un appel vocal interminable</button>
-                <button class="btn" onclick="selectOption(2, 'B')">Un poème exclusif de ton homme</button>
-                <button class="btn" onclick="selectOption(2, 'C')">Un sourire partagé à distance</button>
-            </div>
-        </div>
-
-        <!-- Ecran Resultat -->
-        <div class="screen-result hidden">
-            <div class="heart">💖</div>
-            <h1>Verdict du Thermomètre</h1>
-            <p class="result-text"></p>
-            <button class="btn" onclick="sendResult()">Terminer</button>
-        </div>
-
-        <!-- Ecran Fin -->
-        <div class="screen-thanks hidden">
-            <div class="heart">💝</div>
-            <h1>Merci Olga</h1>
-            <p>Les résultats sont envoyés. Ney prépare sa réponse.</p>
-        </div>
-    </div>
-
+      <div id="splash-screen" class="splash-screen">
+          <div id="lottie-wind-container"></div>
+          <div class="content-container">
+            <img src="logo.png" alt="JournalyQuest Logo" class="splash-logo" style="Animation:none;">
+            <div class="splash-title">JournalyQuest</div>
+            <div class="splash-spinner" style="Animation:none;"></div>
+          </div>
+      </div>
+    <script src="lottie.min.js"></script>
     <script>
-        let choices = {};
-
-        function nextScreen(screenClass) {
-            document.querySelectorAll('.game-card > div').forEach(div => div.classList.add('hidden'));
-            document.querySelector('.' + screenClass).classList.remove('hidden');
-        }
-
-        function selectOption(questionNum, option) {
-            choices[questionNum] = option;
-            if (questionNum === 1) {
-                nextScreen('screen-q2');
-            } else if (questionNum === 2) {
-                showResult();
-            }
-        }
-
-        function showResult() {
-            const resultText = document.querySelector('.result-text');
-            let message = "";
-
-            if (choices[1] === 'C' || choices[2] === 'B') {
-                message = "Diagnostic validé. Olga mérite un océan de tendresse. Ney envoie immédiatement une cargaison d'amour vers le Cameroun pour réchauffer les cœurs.";
-            } else {
-                message = "Alerte grand froid. Une action corrective s'impose : envoie un message à Ney immédiatement pour réclamer ton câlin virtuel.";
-            }
-
-            resultText.innerText = message;
-            nextScreen('screen-result');
-        }
-
-        function sendResult() {
-            const resultText = document.querySelector('.result-text').innerText;
-            
-            fetch('https://formspree.io/f/xkolagwj', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    verdict: resultText,
-                    reponse_q1: choices[1],
-                    reponse_q2: choices[2]
-                })
-            })
-            .then(() => {
-                nextScreen('screen-thanks');
-            })
-            .catch(() => {
-                alert('Erreur de connexion. Réessaye.');
-            });
-        }
-    </script>
+    lottie.loadAnimation({
+    container: document.getElementById('lottie-wind-container'),
+    renderer: 'svg',
+    loop: false,
+    autoplay: true,
+    path: 'wind.json' // Chemin vers votre fichier Lottie
+});
+</script>
+ <script>
+    setTimeout(function() {
+      window.location.href = 'index.html';
+        }, 2500); 
+  </script>
 </body>
 </html>
