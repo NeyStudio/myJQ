@@ -4,77 +4,101 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JournalyQuest</title>
-    <link rel="apple-touch-icon" href="icon-192x192.png">
-    <meta name="theme-color" content="#3498db">
-    <link rel="stylesheet" href="style.css">
-        <style>
-        #lottie-wind-container {
-            position: absolute;
-            left: 90%;
-            bottom: 40%;
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
             width: 100%;
-            z-index: 2;
-            transform: translateX(-100%);
-            opacity: 0;
-            animation: showLottieWind 2.5s ease-in-out forwards;
-            animation-delay: 0.3s;
-            animation: fade 2.6s;
+            height: 100%;
+            overflow: hidden;
+            background: #0f172a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: sans-serif;
+        }
+
+        #splash-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            animation: exit 0.5s ease-in 2s forwards;
+        }
+
+        #lottie-wind-container {
+            width: 200px;
+            height: 200px;
         }
 
         .content-container {
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
+            gap: 15px;
             opacity: 0;
-            animation: fadeInContent 1.30s ease-out forwards;
-            animation-delay: 1.7s; 
-            z-index: 1; 
+            animation: fadeIn 0.8s ease-out 0.5s forwards;
         }
 
-        @keyframes fadeInContent {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
+        .splash-logo {
+            width: 100px;
+            height: 100px;
         }
-         @keyframes fade {
-            0% {
-                opacity: 1;
-            }
-            80%{
-              opacity: 1;
-            }
-            100% {
-                opacity: 0;
-            }
+
+        .splash-title {
+            color: #f8fafc;
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: 2px;
+        }
+
+        .splash-spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid #334155;
+            border-top: 3px solid #38bdf8;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        @keyframes exit {
+            to { opacity: 0; transform: scale(0.95); }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
+</head>
 <body>
-      <div id="splash-screen" class="splash-screen">
-          <div id="lottie-wind-container"></div>
-          <div class="content-container">
-            <img src="logo.png" alt="JournalyQuest Logo" class="splash-logo" style="Animation:none;">
+
+    <div id="splash-screen">
+        <div id="lottie-wind-container"></div>
+        <div class="content-container">
+            <img src="logo.png" alt="Logo" class="splash-logo">
             <div class="splash-title">JournalyQuest</div>
-            <div class="splash-spinner" style="Animation:none;"></div>
-          </div>
-      </div>
+            <div class="splash-spinner"></div>
+        </div>
+    </div>
+
     <script src="lottie.min.js"></script>
     <script>
-    lottie.loadAnimation({
-    container: document.getElementById('lottie-wind-container'),
-    renderer: 'svg',
-    loop: false,
-    autoplay: true,
-    path: 'wind.json' // Chemin vers votre fichier Lottie
-});
-</script>
- <script>
-    setTimeout(function() {
-      window.location.href = 'index.html';
-        }, 2500); 
-  </script>
+        lottie.loadAnimation({
+            container: document.getElementById('lottie-wind-container'),
+            renderer: 'svg',
+            loop: false,
+            autoplay: true,
+            path: 'wind.json'
+        });
+
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 2500);
+    </script>
 </body>
 </html>
+
